@@ -1,5 +1,6 @@
 package server;
 
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -40,32 +41,25 @@ class ServerCode implements Runnable {
         try(socket;
             DataInputStream inputStream = new DataInputStream(this.socket.getInputStream())) {
             int type = inputStream.readInt();
-            String dirName = inputStream.readUTF();
 
             String fs = System.getProperty("file.separator");
 
             String absoluteFilePath = "src" + fs + "main" + fs + "java" + fs + "server" + fs + "repo" + fs;
 
-            if (type == 1 ) { //Sent files
-
+            if (type == 1 ) { //  Receive push
                 // Reads all sent files
-                while (true) {
-                    String name = inputStream.readUTF();
-                    if (name != null) {
-                        int length = inputStream.readInt();
-                        byte[] value = new byte[length];
-                        inputStream.readFully(value);
 
-                        File file = new File(absoluteFilePath + name);
+                String name = inputStream.readUTF();
+                int length = inputStream.readInt();
+                byte[] value = new byte[length];
+                inputStream.readFully(value);
 
-                        file.createNewFile();
+                File file = new File(absoluteFilePath + fs + name);
 
-                        Files.write(Paths.get(absoluteFilePath + name), value);
+                file.createNewFile();
 
-                    } else {
-                        break;
-                    }
-                }
+                Files.write(Paths.get(absoluteFilePath + fs + name), value);
+
             } else {
                 throw new IllegalArgumentException("type " + type);
             }
