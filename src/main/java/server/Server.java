@@ -1,5 +1,9 @@
 package server;
 
+import client.Repository;
+import com.google.gson.Gson;
+
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -40,32 +44,24 @@ class ServerCode implements Runnable {
         try(socket;
             DataInputStream inputStream = new DataInputStream(this.socket.getInputStream())) {
             int type = inputStream.readInt();
-            String dirName = inputStream.readUTF();
 
             String fs = System.getProperty("file.separator");
 
             String absoluteFilePath = "src" + fs + "main" + fs + "java" + fs + "server" + fs + "repo" + fs;
 
-            if (type == 1 ) { //Sent files
-
+            if (type == 1 ) { //  Receive push
                 // Reads all sent files
-                while (true) {
-                    String name = inputStream.readUTF();
-                    if (name != null) {
-                        int length = inputStream.readInt();
-                        byte[] value = new byte[length];
-                        inputStream.readFully(value);
 
-                        File file = new File(absoluteFilePath + name);
+                String json = inputStream.readUTF();
+                Gson gson = new Gson();
+                Repository repo = gson.fromJson(json, Repository.class);
 
-                        file.createNewFile();
+                File file = new File(absoluteFilePath + fs + repo.getName());
 
-                        Files.write(Paths.get(absoluteFilePath + name), value);
+                file.createNewFile();
 
-                    } else {
-                        break;
-                    }
-                }
+                Files.write(Paths.get(absoluteFilePath + fs + repo.getName()), repo.getZip());
+
             } else {
                 throw new IllegalArgumentException("type " + type);
             }
