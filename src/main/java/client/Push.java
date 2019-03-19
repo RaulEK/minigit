@@ -1,5 +1,7 @@
 package client;
 
+import com.google.gson.Gson;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
@@ -21,15 +23,16 @@ public class Push {
 
             byte[] bytes = Files.readAllBytes(Paths.get("src" + fs + "main" + fs + "java" + fs + "client" + fs + "repo" + fs + repoZip));
 
+            Gson gson = new Gson();
+
+            Repository repo = new Repository(repoZip, bytes);
+
+            String json = gson.toJson(repo);
+
             // Message type
             outputStream.writeInt(1);
 
-            // Sends repo name
-            outputStream.writeUTF(repoZip);
-
-            // Sends zip bytes
-            outputStream.writeInt(bytes.length);
-            outputStream.write(bytes);
+            outputStream.writeUTF(json);
 
         }
         System.out.println("Connection finished.");

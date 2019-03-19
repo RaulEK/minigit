@@ -1,5 +1,8 @@
 package server;
 
+import client.Repository;
+import com.google.gson.Gson;
+
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -49,16 +52,15 @@ class ServerCode implements Runnable {
             if (type == 1 ) { //  Receive push
                 // Reads all sent files
 
-                String name = inputStream.readUTF();
-                int length = inputStream.readInt();
-                byte[] value = new byte[length];
-                inputStream.readFully(value);
+                String json = inputStream.readUTF();
+                Gson gson = new Gson();
+                Repository repo = gson.fromJson(json, Repository.class);
 
-                File file = new File(absoluteFilePath + fs + name);
+                File file = new File(absoluteFilePath + fs + repo.getName());
 
                 file.createNewFile();
 
-                Files.write(Paths.get(absoluteFilePath + fs + name), value);
+                Files.write(Paths.get(absoluteFilePath + fs + repo.getName()), repo.getZip());
 
             } else {
                 throw new IllegalArgumentException("type " + type);
