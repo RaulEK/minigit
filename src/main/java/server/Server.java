@@ -1,9 +1,8 @@
 package server;
 
-import client.Repository;
+import models.Repository;
 import com.google.gson.Gson;
 
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -15,9 +14,9 @@ import java.nio.file.Paths;
 public class Server {
     public static void main(String[] args) throws IOException {
         Socket socket = null;
-        try (ServerSocket ss = new ServerSocket(8080)){
+        try (ServerSocket ss = new ServerSocket(7543)){
 
-            System.out.println("Starting server on port .8080");
+            System.out.println("Starting server on port 7543");
             while (true) {
 
                 socket = ss.accept();
