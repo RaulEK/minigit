@@ -59,7 +59,7 @@ class ServerCode implements Runnable {
 
                 file.createNewFile();
 
-                Files.write(Paths.get(absoluteFilePath + fs + repo.getName()), repo.getZip());
+                // Files.write(Paths.get(absoluteFilePath + fs + repo.getName()), repo.getZip());
 
             } else {
                 throw new IllegalArgumentException("type " + type);

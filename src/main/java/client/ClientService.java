@@ -5,9 +5,7 @@ import models.Commit;
 import models.Constants;
 import models.Repository;
 
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -78,15 +76,43 @@ public class ClientService {
         appZip.zipIt(appZip.getOUTPUT_ZIP_FILE());*/
     }
 
-    public static Repository readRepository() {
+    public static Repository readRepository() throws FileNotFoundException {
         // here we should:
         // read the repository file from .minigit folder
         // will use this when we need access to the repository object
+        Path pathToRepoFile = Paths.get("./", ".minigit","repository.json").normalize();
+
+        File file = new File(pathToRepoFile.toString());
+
+        Gson gson = new Gson();
+
+        Repository repo = gson.fromJson(new FileReader(file), Repository.class);
+
+        return repo;
     }
 
-    public static void saveRepository(Repository repository) {
+
+    public static void createFolder() throws IOException {
+        Path pathToRepoFolder = Paths.get("./", ".minigit");
+        Files.createDirectories(pathToRepoFolder);
+    }
+
+    public static void saveRepository(Repository repository) throws IOException {
         // here we should:
         // serialize the repository
         // save the repository file to .minigit folder
+
+        Path pathToRepoFile = Paths.get("./", ".minigit","repository.json").normalize();
+
+        if(!Files.exists(pathToRepoFile)) {
+            createFolder();
+        }
+
+        File file = new File(pathToRepoFile.toAbsolutePath().toString());
+        Gson gson = new Gson();
+        FileWriter writer = new FileWriter(file);
+        gson.toJson(repository, writer);
+        writer.close();
+
     }
 }
