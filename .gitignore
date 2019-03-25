@@ -28,3 +28,5 @@ Thumbs.db
 
 #don't need out directory
 out/
+
+.minigit/
