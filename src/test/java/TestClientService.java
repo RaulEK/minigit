@@ -14,8 +14,6 @@ public class TestClientService {
 
         ClientService.commitRepository("123123","minu esimene commit", workingDir);
 
-        ClientService.saveRepository(repository);
-
         ClientService.pushRepository(repository);
 
     }

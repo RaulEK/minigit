@@ -112,7 +112,7 @@ public class ClientService {
         // will use this when we need access to the repository object
         Path pathToRepoFile = Paths.get(".minigit","repository.json").normalize();
 
-        File file = new File(pathToRepoFile.toString());
+        File file = new File(pathToRepoFile.toAbsolutePath().toString());
 
         Gson gson = new Gson();
 
