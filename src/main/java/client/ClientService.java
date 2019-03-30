@@ -4,6 +4,10 @@ import com.google.gson.Gson;
 import models.Commit;
 import models.Constants;
 import models.Repository;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.util.Zip4jConstants;
 
 import java.io.*;
 import java.net.Socket;
@@ -15,7 +19,7 @@ import java.util.UUID;
 
 public class ClientService {
 
-    public static void pushRepository(Repository repo) throws IOException {
+    public static void pushRepository(Repository repo) throws IOException, ZipException {
 
         // here we should:
         // zip the entire .minigit folder
@@ -24,33 +28,41 @@ public class ClientService {
         // and attempt to store it
         // if there are any conflicts (commit zips with same name) then reject
 
-        /* String temporaryArchiveName = UUID.randomUUID().toString();
+        String temporaryArchiveName = UUID.randomUUID().toString();
 
-        String fs = System.getProperty("file.separator");
-
-        //Sends Repo zip to server.
+        /* Sends .minigit folder to the server */
         System.out.println("Connecting to server.");
-        try (Socket socket = new Socket("localhost", 8080);
+        try (Socket socket = new Socket("localhost", 7543);
              DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream())) {
 
-            // TODO: zip archive here and send it to server
-            byte[] bytes = Files.readAllBytes(Paths.get("" +  temporaryArchiveName));
+            /* Object which is used to create a zip file from the .minigit folder. */
+            ZipFile zip = new ZipFile(Paths.get(temporaryArchiveName + ".zip").toString());
+
+            ZipParameters zipParameters = new ZipParameters();
+            zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
+            zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+
+            /* Creates a zip file from the .minigit folder. */
+            zip.createZipFileFromFolder(".minigit", zipParameters, false, 0);
+
+            byte[] bytes = Files.readAllBytes(Paths.get(temporaryArchiveName + ".zip"));
+
+            /* TODO: Send bytes in chunks, because writeUTF can only send 64KB.
+             * TODO: if there are any conflicts (commit zips with same name) then reject. */
 
             Gson gson = new Gson();
 
-            String json = gson.toJson(repo);
+            String json = gson.toJson(bytes);
 
-            // Message type
+            outputStream.writeInt(1);
 
-            // outputStream.writeInt(1);
-
-            // outputStream.writeUTF(json);
+            outputStream.writeUTF(json);
 
         }
-        System.out.println("Connection finished.");*/
+        System.out.println("Connection finished.");
     }
 
-    public static void commitRepository(String commitName) {
+    public static void commitRepository(String commitName, String message, String workingDir) throws ZipException, IOException {
 
         // here we should:
         // add the entire working directory to zip file
@@ -60,27 +72,45 @@ public class ClientService {
         // add the commit to the repository
         // save the repository file
 
-        /*// Saves zip to local repo folder.
-        Path projectPath = Paths.get("");
+        /* Object which is used to create a zip file from working directory. */
+        ZipFile zip = new ZipFile(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, commitName + ".zip").toString());
 
-        String fs = System.getProperty("file.separator");
+        ZipParameters zipParameters = new ZipParameters();
+        zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
+        zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
 
-        Commit commit = new Commit(commitName);
+        /* Iterates through all files in the working dir and adds them to the zip, if the file isn't .minigit.
+         In the future also ignores all files that are in .miniGitIgnore. */
+        File dir = new File(workingDir);
+        File[] files = dir.listFiles();
+        if(files != null) {
+            for (File file : files) {
+                if (file.getName().endsWith(".minigit")) {
+                    continue;
+                } else if(file.isDirectory()) {
+                    zip.addFolder(file, zipParameters);
+                }  else {
+                    zip.addFile(file, zipParameters);
+                }
+            }
+        } else {
+            // Means that there are no files in the working directory.
+        }
 
+        /* Creates a commit, adds it to a repository and saves the repository. */
+        Commit commit = new Commit(commitName, message);
 
-        String temporaryArchiveName = UUID.randomUUID().toString();
-
-        // create a zip of everything in directory, ignoring the .minigit folder
-        ZipUtils appZip = new ZipUtils(Paths.get(""), Paths.get(Constants.MINIGIT_DIRECTORY_NAME, temporaryArchiveName+".zip"));
-        appZip.generateFileList(new File(appZip.getSOURCE_FOLDER()));
-        appZip.zipIt(appZip.getOUTPUT_ZIP_FILE());*/
+        Repository repo = readRepository();
+        /* TODO: Check if commit with same name already exists. */
+        repo.addCommit(commit);
+        saveRepository(repo);
     }
 
-    public static Repository readRepository() throws FileNotFoundException {
+    public static Repository readRepository() throws IOException {
         // here we should:
         // read the repository file from .minigit folder
         // will use this when we need access to the repository object
-        Path pathToRepoFile = Paths.get("./", ".minigit","repository.json").normalize();
+        Path pathToRepoFile = Paths.get(".minigit","repository.json").normalize();
 
         File file = new File(pathToRepoFile.toString());
 
@@ -93,7 +123,7 @@ public class ClientService {
 
 
     public static void createFolder() throws IOException {
-        Path pathToRepoFolder = Paths.get("./", ".minigit");
+        Path pathToRepoFolder = Paths.get( ".minigit");
         Files.createDirectories(pathToRepoFolder);
     }
 
@@ -102,7 +132,7 @@ public class ClientService {
         // serialize the repository
         // save the repository file to .minigit folder
 
-        Path pathToRepoFile = Paths.get("./", ".minigit","repository.json").normalize();
+        Path pathToRepoFile = Paths.get(".minigit","repository.json").normalize();
 
         if(!Files.exists(pathToRepoFile)) {
             createFolder();
@@ -113,6 +143,5 @@ public class ClientService {
         FileWriter writer = new FileWriter(file);
         gson.toJson(repository, writer);
         writer.close();
-
     }
 }
