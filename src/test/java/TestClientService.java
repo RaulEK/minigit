@@ -1,17 +1,20 @@
 import client.ClientService;
-import models.Commit;
 import models.Repository;
+
+import java.nio.file.Paths;
 
 public class TestClientService {
     public static void main(String[] args) throws Exception {
-        Repository repository = new Repository("Minu uus repositoorium");
 
-        Commit commit = new Commit("123123", "Jou test message");
+        String workingDir = Paths.get("src", "test", "resources", "test").toString();
 
-        repository.addCommit(commit);
+        Repository repository = new Repository("minigit");
 
         ClientService.saveRepository(repository);
 
-        System.out.println(ClientService.readRepository().getName().equals("Minu uus repositoorium"));
+        ClientService.commitRepository("123123","minu esimene commit", workingDir);
+
+        ClientService.pushRepository(repository);
+
     }
 }
