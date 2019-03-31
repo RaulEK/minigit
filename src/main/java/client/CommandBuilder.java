@@ -32,6 +32,8 @@ public class CommandBuilder {
                 case "commit":
                     CommitCommand commit = new CommitCommand(input);
                     commit.process();
+                    // TODO: commit instance field here
+                    System.out.println("Commit done");
                     break;
             }
         }

@@ -73,6 +73,8 @@ public class ClientService {
         // save the repository file
 
         /* Object which is used to create a zip file from working directory. */
+        System.out.println("Committing repository");
+        ClientService.createFolder();
         ZipFile zip = new ZipFile(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, commitName + ".zip").toString());
 
         ZipParameters zipParameters = new ZipParameters();
@@ -88,8 +90,10 @@ public class ClientService {
                 if (file.getName().endsWith(".minigit")) {
                     continue;
                 } else if(file.isDirectory()) {
+                    System.out.println("Added folder" + file);
                     zip.addFolder(file, zipParameters);
                 }  else {
+                    System.out.println("Added file" + file);
                     zip.addFile(file, zipParameters);
                 }
             }
@@ -106,7 +110,7 @@ public class ClientService {
         saveRepository(repo);
     }
 
-    public static Repository readRepository() throws IOException {
+    public static Repository readRepository() {
         // here we should:
         // read the repository file from .minigit folder
         // will use this when we need access to the repository object
@@ -116,14 +120,22 @@ public class ClientService {
 
         Gson gson = new Gson();
 
-        Repository repo = gson.fromJson(new FileReader(file), Repository.class);
+        try {
+            Repository repo = gson.fromJson(new FileReader(file), Repository.class);
+            return repo;
+        } catch(IOException e) {
+            // TODO: remove this later, add this to a separate init command.
+            return initRepository("Testing");
+        }
+    }
 
+    public static Repository initRepository(String name) {
+        Repository repo = new Repository(name);
         return repo;
     }
 
-
     public static void createFolder() throws IOException {
-        Path pathToRepoFolder = Paths.get( ".minigit");
+        Path pathToRepoFolder = Paths.get( Constants.MINIGIT_DIRECTORY_NAME);
         Files.createDirectories(pathToRepoFolder);
     }
 
