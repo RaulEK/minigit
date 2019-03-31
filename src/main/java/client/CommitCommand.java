@@ -11,7 +11,13 @@ public class CommitCommand extends Command {
         if (getInput().length == 2) {
             String message = getInput()[1];
             String commitName = getInput()[0];
-            ClientService.commitRepository(commitName, message, System.getProperty("user.dir"));
+            try {
+                ClientService.commitRepository(commitName, message, System.getProperty("user.dir"));
+            } catch(Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            System.out.println("Invalid parameters. Try commit commitHash commitName");
         }
     }
 }
