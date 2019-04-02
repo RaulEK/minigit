@@ -3,6 +3,7 @@ package client;
 import com.google.gson.Gson;
 import models.Commit;
 import models.Constants;
+import models.MessageIds;
 import models.Repository;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -33,7 +34,8 @@ public class ClientService {
         /* Sends .minigit folder to the server */
         System.out.println("Connecting to server.");
         try (Socket socket = new Socket("localhost", 7543);
-             DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream())) {
+             OutputStream os = socket.getOutputStream();
+             DataOutputStream dos = new DataOutputStream(os);) {
 
             /* Object which is used to create a zip file from the .minigit folder. */
             ZipFile zip = new ZipFile(Paths.get(temporaryArchiveName + ".zip").toString());
@@ -42,22 +44,17 @@ public class ClientService {
             zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
             zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
 
-            /* Creates a zip file from the .minigit folder. */
+            /* Creates a zip file from the .minigit folder and reads all bytes. */
             zip.createZipFileFromFolder(".minigit", zipParameters, false, 0);
 
             byte[] bytes = Files.readAllBytes(Paths.get(temporaryArchiveName + ".zip"));
 
-            /* TODO: Send bytes in chunks, because writeUTF can only send 64KB.
-             * TODO: if there are any conflicts (commit zips with same name) then reject. */
+            /* Sends bytes to the client */
+            dos.writeInt(MessageIds.PUSH_RECEIVED);
 
-            Gson gson = new Gson();
+            os.write(bytes, 0, bytes.length);
 
-            String json = gson.toJson(bytes);
-
-            outputStream.writeInt(1);
-
-            outputStream.writeUTF(json);
-
+            os.flush();
         }
         System.out.println("Connection finished.");
     }
