@@ -11,10 +11,5 @@ public class TestClientService {
         Repository repository = new Repository("minigit");
 
         ClientService.saveRepository(repository);
-
-        ClientService.commitRepository("123123","minu esimene commit", workingDir);
-
-        ClientService.pushRepository(repository);
-
     }
 }
