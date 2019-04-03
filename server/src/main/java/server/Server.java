@@ -1,6 +1,6 @@
 package server;
 
-import com.google.gson.Gson;
+import models.MessageIds;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.io.FileUtils;
@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Paths;
@@ -43,34 +44,38 @@ class ServerCode implements Runnable {
         System.out.println("Client connected.");
 
         try(socket;
-            DataInputStream inputStream = new DataInputStream(this.socket.getInputStream())) {
+            InputStream is = this.socket.getInputStream();
+            DataInputStream inputStream = new DataInputStream(is)) {
+
+            /* Reads message type */
             int type = inputStream.readInt();
 
             String temporaryArchiveName = UUID.randomUUID().toString();
 
-            String serverFilePath = Paths.get("src","main", "java", "server").toString();
+            String fs = File.separator;
 
-            if (type == 1) { //  Receive push
+            String serverResourcesPath = Paths.get("..","..", "src", "main", "resources").toString();
 
-                /* Read UTF send by client. */
-                String json = inputStream.readUTF();
+            System.out.println(serverResourcesPath);
 
-                Gson gson = new Gson();
+            if (type == MessageIds.PUSH_RECEIVED) {
 
-                byte[] bytes = null;
-                bytes = gson.fromJson(json, byte[].class);
+                /* Reads all bytes from client */
+                byte[] bytes = is.readAllBytes();
 
-                /* Create a ZIP file from the bytes the client has sent to the server folder. */
-                FileUtils.writeByteArrayToFile(new File(serverFilePath + File.separator + temporaryArchiveName + ".zip"), bytes);
+                /* Creates a ZIP file from the bytes the client has sent to the server/main/resources folder. */
+                FileUtils.writeByteArrayToFile(new File(serverResourcesPath + fs + temporaryArchiveName + ".zip"), bytes);
 
-                /* Extract the zip file to the server folder. */
-                ZipFile zip = new ZipFile(serverFilePath + File.separator + temporaryArchiveName + ".zip");
-                zip.extractAll(serverFilePath);
+                /* Extracts the zip file to the server/main/resources folder. */
+                ZipFile zip = new ZipFile(serverResourcesPath + fs + temporaryArchiveName + ".zip");
+                zip.extractAll(serverResourcesPath);
 
             } else {
                 throw new IllegalArgumentException("type " + type);
             }
-        } catch (IOException | ZipException e){
+        } catch (ZipException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e){
             throw new RuntimeException(e);
         }
         System.out.println("Connection finished.");

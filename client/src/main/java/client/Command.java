@@ -1,7 +1,5 @@
 package client;
 
-import models.Commit;
-
 import java.io.IOException;
 
 public class Command {
