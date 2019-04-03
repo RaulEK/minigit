@@ -1,3 +1,11 @@
+plugins {
+    id 'application'
+}
+
+application {
+    mainClassName = 'server.Server'
+}
+
 dependencies {
     compile project(':models')
 }
@@ -11,4 +19,11 @@ jar {
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
+}
+
+task createStartScripts(type: CreateStartScripts) {
+    outputDir = file('build/libs')
+    mainClassName = 'server.server.Server'
+    applicationName = 'server'
+    classpath = files('build/libs/server.jar')
 }
