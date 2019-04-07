@@ -12,9 +12,8 @@ public class PushCommand extends Command {
     public void process() throws IOException {
         try {
             ClientService.pushRepository(ClientService.readRepository());
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
-
 }

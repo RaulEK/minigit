@@ -14,5 +14,6 @@ public class Command {
         return input;
     }
 
-    public void process() throws IOException {}
+    public void process() throws IOException {
+    }
 }

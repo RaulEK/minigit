@@ -13,7 +13,7 @@ public class CommitCommand extends Command {
             String commitName = getInput()[0];
             try {
                 ClientService.commitRepository(commitName, message, System.getProperty("user.dir"));
-            } catch(Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         } else {
