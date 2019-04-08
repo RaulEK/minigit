@@ -4,12 +4,11 @@ import java.io.IOException;
 
 public class PushCommand extends Command {
 
-    public PushCommand(String[] input) {
-        super(input);
-    }
+    public PushCommand() {}
+
 
     @Override
-    public void process() throws IOException {
+    public void process(String[] input) throws IOException {
         try {
             ClientService.pushRepository(ClientService.readRepository());
         } catch (Exception e) {

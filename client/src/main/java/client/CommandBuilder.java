@@ -14,8 +14,8 @@ public class CommandBuilder {
     public CommandBuilder(String[] args) {
         this.command = args[0];
 
-        availableCommands.put("push", new PushCommand(Arrays.copyOfRange(args, 1, args.length)));
-        availableCommands.put("commit", new CommitCommand(Arrays.copyOfRange(args, 1, args.length)));
+        availableCommands.put("push", new PushCommand());
+        availableCommands.put("commit", new CommitCommand());
     }
 
     public Command findCommandByName() throws IOException {
