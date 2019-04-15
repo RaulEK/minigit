@@ -7,18 +7,16 @@ public class CommitCommand extends Command {
     public CommitCommand() {}
 
     @Override
-    public void process(String[] input) throws IOException {
-        setInput(input);
-        if (getInput().length == 3) {
-            String message = getInput()[2];
-            String commitName = getInput()[1];
+    public void process() throws IOException {
+        if (getInput().length == 1) {
+            String message = getInput()[0];
             try {
-                ClientService.commitRepository(commitName, message, System.getProperty("user.dir"));
-            } catch (Exception e) {
+                ClientService.commitRepository(message, System.getProperty("user.dir"));
+            } catch(Exception e) {
                 throw new RuntimeException(e);
             }
         } else {
-            System.out.println("Invalid parameters. Try: commit commitHash commitName");
+            System.out.println("Invalid parameters. Try commit commitName");
         }
     }
 }
