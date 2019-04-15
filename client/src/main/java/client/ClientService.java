@@ -15,6 +15,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -59,7 +60,7 @@ public class ClientService {
         System.out.println("Connection finished.");
     }
 
-    public static void commitRepository(String commitName, String message, String workingDir) throws ZipException, IOException {
+    public static void commitRepository(String message, String workingDir) throws ZipException, IOException {
 
         // here we should:
         // add the entire working directory to zip file
@@ -72,7 +73,11 @@ public class ClientService {
         /* Object which is used to create a zip file from working directory. */
         System.out.println("Committing repository");
         ClientService.createFolder();
-        ZipFile zip = new ZipFile(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, commitName + ".zip").toString());
+
+        String temporaryArchiveName = UUID.randomUUID().toString();
+        Path temporaryArchivePath = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, temporaryArchiveName + ".zip");
+
+        ZipFile zip = new ZipFile(temporaryArchivePath.toString());
 
         ZipParameters zipParameters = new ZipParameters();
         zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
@@ -99,11 +104,32 @@ public class ClientService {
         }
 
         /* Creates a commit, adds it to a repository and saves the repository. */
-        Commit commit = new Commit(commitName, message);
+
+        // SHA1 hash of zip file
+        System.out.println("Calculating hash and creating commit");
+        String hash = repositoryFileSha1(temporaryArchiveName);
+
+        // Hash we are going to use to identify commit
+        // Can't just use the hash of zip because then we can't have same contents and the same timestamp in .zip
+        String commitHash = hash.substring(0, 15) + UUID.randomUUID().toString().substring(0,5);
+
+        File newArchiveFile = new File(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, commitHash + ".zip").toString());
+        File temporaryArchiveFile = new File(temporaryArchivePath.toString());
+        if(!temporaryArchiveFile.renameTo(newArchiveFile)){
+            throw new IOException("Can't rename archive file");
+        };
 
         Repository repo = readRepository();
-        /* TODO: Check if commit with same name already exists. */
-        repo.addCommit(commit);
+        List<Commit> commits = repo.getCommits();
+
+        // probably don't need to check if same name commit exists, it's random enough™
+        if(commits.isEmpty()) {
+            repo.addCommit(new Commit(commitHash, message, ""));
+        } else {
+            String lastHash = commits.get(commits.size() - 1).getHash();
+            repo.addCommit(new Commit(commitHash, message, lastHash));
+        }
+
         saveRepository(repo);
     }
 
@@ -134,6 +160,12 @@ public class ClientService {
     public static void createFolder() throws IOException {
         Path pathToRepoFolder = Paths.get( Constants.MINIGIT_DIRECTORY_NAME);
         Files.createDirectories(pathToRepoFolder);
+    }
+
+    public static String repositoryFileSha1(String uuid) throws IOException {
+        try (InputStream is = Files.newInputStream(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, uuid + ".zip"))) {
+            return org.apache.commons.codec.digest.DigestUtils.sha1Hex(is);
+        }
     }
 
     public static void saveRepository(Repository repository) throws IOException {
