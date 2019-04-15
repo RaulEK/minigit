@@ -8,11 +8,7 @@ public class PushCommand extends Command {
 
 
     @Override
-    public void process(String[] input) throws IOException {
-        try {
-            ClientService.pushRepository(ClientService.readRepository());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public void process(String[] input) throws Exception {
+        ClientService.pushRepository(ClientService.readRepository());
     }
 }

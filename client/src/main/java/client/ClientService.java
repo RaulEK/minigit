@@ -35,8 +35,7 @@ public class ClientService {
         /* Sends .minigit folder to the server */
         System.out.println("Connecting to server.");
         try (Socket socket = new Socket("localhost", 7543);
-             OutputStream os = socket.getOutputStream();
-             DataOutputStream dos = new DataOutputStream(os);) {
+             DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
 
             /* Object which is used to create a zip file from the .minigit folder. */
             ZipFile zip = new ZipFile(Paths.get(temporaryArchiveName + ".zip").toString());
@@ -53,9 +52,10 @@ public class ClientService {
             /* Sends bytes to the client */
             dos.writeInt(MessageIds.PUSH_RECEIVED);
 
-            os.write(bytes, 0, bytes.length);
+            /* Send message length and bytes */
+            dos.writeInt(bytes.length);
 
-            os.flush();
+            dos.write(bytes, 0, bytes.length);
         }
         System.out.println("Connection finished.");
     }

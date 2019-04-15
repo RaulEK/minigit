@@ -17,6 +17,6 @@ public class Command {
         this.input = input;
     }
 
-    public void process(String[] input) throws IOException {
+    public void process(String[] input) throws IOException, Exception {
     }
 }

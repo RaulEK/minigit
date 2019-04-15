@@ -6,15 +6,11 @@ public class CommitCommand extends Command {
 
     public CommitCommand() {}
 
-    @Override
-    public void process() throws IOException {
-        if (getInput().length == 1) {
+    public void process(String[] input) throws Exception{
+        setInput(input);
+        if (getInput().length == 2) {
             String message = getInput()[0];
-            try {
-                ClientService.commitRepository(message, System.getProperty("user.dir"));
-            } catch(Exception e) {
-                throw new RuntimeException(e);
-            }
+            ClientService.commitRepository(message, System.getProperty("user.dir"));
         } else {
             System.out.println("Invalid parameters. Try commit commitName");
         }
