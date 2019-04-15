@@ -1,13 +1,13 @@
 package client;
 
+import java.io.IOException;
+
 public class CommitCommand extends Command {
 
-    public CommitCommand(String[] input) {
-        super(input);
-    }
+    public CommitCommand() {}
 
     @Override
-    public void process() {
+    public void process() throws IOException {
         if (getInput().length == 1) {
             String message = getInput()[0];
             try {
