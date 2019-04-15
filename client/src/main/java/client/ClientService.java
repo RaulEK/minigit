@@ -9,6 +9,7 @@ import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.util.Zip4jConstants;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.net.Socket;
@@ -49,15 +50,38 @@ public class ClientService {
 
             byte[] bytes = Files.readAllBytes(Paths.get(temporaryArchiveName + ".zip"));
 
-            /* Sends bytes to the client */
             dos.writeInt(MessageIds.PUSH_RECEIVED);
 
             /* Send message length and bytes */
             dos.writeInt(bytes.length);
 
+            /* Sends bytes to the client */
             dos.write(bytes, 0, bytes.length);
         }
         System.out.println("Connection finished.");
+    }
+
+    public static void pullRepository() throws IOException, ZipException {
+
+        String temporaryArchiveName = UUID.randomUUID().toString() + ".zip";
+
+        System.out.println("Connecting to server.");
+        try (Socket socket = new Socket("localhost", 7543);
+             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+             DataInputStream dis = new DataInputStream(socket.getInputStream())) {
+
+            dos.writeInt(MessageIds.PULL_REQUEST);
+
+            int bytesLen = dis.readInt();
+
+            byte[] bytes = dis.readNBytes(bytesLen);
+
+            FileUtils.writeByteArrayToFile(new File(temporaryArchiveName), bytes);
+
+            /* Extracts the zip file to the server/main/resources folder. */
+            ZipFile zip = new ZipFile(temporaryArchiveName);
+            zip.extractAll(".");
+        }
     }
 
     public static void commitRepository(String message, String workingDir) throws ZipException, IOException {
