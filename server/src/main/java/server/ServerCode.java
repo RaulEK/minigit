@@ -1,6 +1,8 @@
 package server;
 
+import models.Constants;
 import models.MessageIds;
+import models.ZipUtils;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
@@ -59,14 +61,8 @@ public class ServerCode implements Runnable {
                 zip.extractAll(serverFolder);
 
             } else if (type == MessageIds.PULL_REQUEST) {
-                ZipFile zip = new ZipFile(Paths.get(temporaryArchiveName).toString());
 
-                ZipParameters zipParameters = new ZipParameters();
-                zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
-                zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
-
-                /* Creates a zip file from the .minigit folder and reads all bytes. */
-                zip.createZipFileFromFolder(".minigit", zipParameters, false, 0);
+                ZipUtils.createZipFileFromFolder(temporaryArchiveName, Constants.MINIGIT_DIRECTORY_NAME);
 
                 byte[] bytes = Files.readAllBytes(Paths.get(temporaryArchiveName));
 

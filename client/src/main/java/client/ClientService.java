@@ -1,10 +1,7 @@
 package client;
 
 import com.google.gson.Gson;
-import models.Commit;
-import models.Constants;
-import models.MessageIds;
-import models.Repository;
+import models.*;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
@@ -13,6 +10,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,15 +36,7 @@ public class ClientService {
         try (Socket socket = new Socket("localhost", 7543);
              DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
 
-            /* Object which is used to create a zip file from the .minigit folder. */
-            ZipFile zip = new ZipFile(Paths.get(temporaryArchiveName + ".zip").toString());
-
-            ZipParameters zipParameters = new ZipParameters();
-            zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
-            zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
-
-            /* Creates a zip file from the .minigit folder and reads all bytes. */
-            zip.createZipFileFromFolder(".minigit", zipParameters, false, 0);
+            ZipUtils.createZipFileFromFolder(temporaryArchiveName + ".zip", Constants.MINIGIT_DIRECTORY_NAME);
 
             byte[] bytes = Files.readAllBytes(Paths.get(temporaryArchiveName + ".zip"));
 
@@ -63,7 +53,7 @@ public class ClientService {
 
     public static void pullRepository() throws IOException, ZipException {
 
-        String temporaryArchiveName = UUID.randomUUID().toString() + ".zip";
+        String temporaryArchiveName = UUID.randomUUID().toString();
 
         System.out.println("Connecting to server.");
         try (Socket socket = new Socket("localhost", 7543);
@@ -76,11 +66,19 @@ public class ClientService {
 
             byte[] bytes = dis.readNBytes(bytesLen);
 
-            FileUtils.writeByteArrayToFile(new File(temporaryArchiveName), bytes);
+            FileUtils.writeByteArrayToFile(new File(temporaryArchiveName + ".zip"), bytes);
 
-            /* Extracts the zip file to the server/main/resources folder. */
-            ZipFile zip = new ZipFile(temporaryArchiveName);
-            zip.extractAll(".");
+            /* Extracts the zip file to working directory. */
+            ZipUtils.extractZipFile(temporaryArchiveName + ".zip", ".");
+
+            /* Finds last commit and extracts to current working directory.  */
+            Repository repository = readRepository();
+            List<Commit> commits = repository.getCommits();
+            String latestCommitName = commits.get(commits.size() - 1).getHash() + ".zip";
+
+            Path commitPath = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, latestCommitName);
+
+            ZipUtils.extractZipFile(commitPath.toString(), ".");
         }
     }
 
@@ -99,6 +97,7 @@ public class ClientService {
         ClientService.createFolder();
 
         String temporaryArchiveName = UUID.randomUUID().toString();
+
         Path temporaryArchivePath = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, temporaryArchiveName + ".zip");
 
         ZipFile zip = new ZipFile(temporaryArchivePath.toString());
@@ -168,7 +167,7 @@ public class ClientService {
         Gson gson = new Gson();
 
         try {
-            Repository repo = gson.fromJson(new FileReader(file), Repository.class);
+            Repository repo = gson.fromJson(new FileReader(file, Charset.forName("UTF-8")), Repository.class);
             return repo;
         } catch(IOException e) {
             // TODO: remove this later, add this to a separate init command.
@@ -205,8 +204,9 @@ public class ClientService {
 
         File file = new File(pathToRepoFile.toAbsolutePath().toString());
         Gson gson = new Gson();
-        FileWriter writer = new FileWriter(file);
-        gson.toJson(repository, writer);
-        writer.close();
+
+        try (FileWriter writer = new FileWriter(file)) {
+            gson.toJson(repository, writer);
+        }
     }
 }
