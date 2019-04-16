@@ -1,4 +1,5 @@
 import client.ClientService;
+import client.ClientUtils;
 import models.Repository;
 
 import java.nio.file.Paths;
@@ -10,6 +11,6 @@ public class TestClientService {
 
         Repository repository = new Repository("minigit");
 
-        ClientService.saveRepository(repository);
+        ClientUtils.saveRepository(repository);
     }
 }

@@ -17,6 +17,9 @@ public class CommandBuilder {
         availableCommands.put("push", new PushCommand());
         availableCommands.put("commit", new CommitCommand());
         availableCommands.put("pull", new PullCommand());
+        availableCommands.put("init", new InitCommand());
+        availableCommands.put("log", new LogCommand());
+        availableCommands.put("checkout", new CheckoutCommand());
     }
 
     public Command findCommandByName() throws IOException {
