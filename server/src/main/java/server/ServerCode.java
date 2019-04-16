@@ -39,10 +39,6 @@ public class ServerCode implements Runnable {
 
             String temporaryArchiveName = UUID.randomUUID().toString() + ".zip";
 
-            String fs = File.separator;
-
-            String serverFolder = Paths.get(".").toString();
-
             System.out.println("Wrote file to folder where serer.jar was started.");
 
             if (type == MessageIds.PUSH_RECEIVED) {
@@ -54,11 +50,12 @@ public class ServerCode implements Runnable {
                 byte[] bytes = dis.readNBytes(bytesLen);
 
                 /* Creates a ZIP file from the bytes the client has sent to the server/main/resources folder. */
-                FileUtils.writeByteArrayToFile(new File(serverFolder + fs + temporaryArchiveName), bytes);
+                FileUtils.writeByteArrayToFile(new File(temporaryArchiveName), bytes);
 
-                /* Extracts the zip file to the server/main/resources folder. */
-                ZipFile zip = new ZipFile(serverFolder + fs + temporaryArchiveName);
-                zip.extractAll(serverFolder);
+                /* Extracts the zip file */
+                ZipUtils.extractZipFile(temporaryArchiveName, ".");
+
+                new File(temporaryArchiveName).delete();
 
             } else if (type == MessageIds.PULL_REQUEST) {
 

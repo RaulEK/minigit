@@ -6,9 +6,8 @@ public class PushCommand extends Command {
 
     public PushCommand() {}
 
-
     @Override
     public void process(String[] input) throws Exception {
-        ClientService.pushRepository(ClientService.readRepository());
+        ClientService.pushRepository(ClientUtils.readRepository());
     }
 }

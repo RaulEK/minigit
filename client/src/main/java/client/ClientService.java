@@ -40,6 +40,9 @@ public class ClientService {
 
             byte[] bytes = Files.readAllBytes(Paths.get(temporaryArchiveName + ".zip"));
 
+            /* Deletes temporary zip file. */
+            new File(temporaryArchiveName + ".zip").delete();
+
             dos.writeInt(MessageIds.PUSH_RECEIVED);
 
             /* Send message length and bytes */
@@ -72,11 +75,16 @@ public class ClientService {
             ZipUtils.extractZipFile(temporaryArchiveName + ".zip", ".");
 
             /* Finds last commit and extracts to current working directory.  */
-            Repository repository = readRepository();
+            Repository repository = ClientUtils.readRepository();
             List<Commit> commits = repository.getCommits();
             String latestCommitName = commits.get(commits.size() - 1).getHash() + ".zip";
 
             Path commitPath = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, latestCommitName);
+
+            /* Deletes temporary zip file. */
+            new File(temporaryArchiveName + ".zip").delete();
+
+            ClientUtils.cleanWorkingDirectory();
 
             ZipUtils.extractZipFile(commitPath.toString(), ".");
         }
@@ -92,14 +100,14 @@ public class ClientService {
         // add the commit to the repository
         // save the repository file
 
-        /* Object which is used to create a zip file from working directory. */
         System.out.println("Committing repository");
-        ClientService.createFolder();
+        ClientUtils.createFolder();
 
         String temporaryArchiveName = UUID.randomUUID().toString();
 
         Path temporaryArchivePath = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, temporaryArchiveName + ".zip");
 
+        /* Object which is used to create a zip file from working directory. */
         ZipFile zip = new ZipFile(temporaryArchivePath.toString());
 
         ZipParameters zipParameters = new ZipParameters();
@@ -122,15 +130,11 @@ public class ClientService {
                     zip.addFile(file, zipParameters);
                 }
             }
-        } else {
-            // Means that there are no files in the working directory.
         }
-
-        /* Creates a commit, adds it to a repository and saves the repository. */
 
         // SHA1 hash of zip file
         System.out.println("Calculating hash and creating commit");
-        String hash = repositoryFileSha1(temporaryArchiveName);
+        String hash = ClientUtils.repositoryFileSha1(temporaryArchiveName);
 
         // Hash we are going to use to identify commit
         // Can't just use the hash of zip because then we can't have same contents and the same timestamp in .zip
@@ -142,7 +146,8 @@ public class ClientService {
             throw new IOException("Can't rename archive file");
         };
 
-        Repository repo = readRepository();
+        /* Creates a commit, adds it to a repository and saves the repository. */
+        Repository repo = ClientUtils.readRepository();
         List<Commit> commits = repo.getCommits();
 
         // probably don't need to check if same name commit exists, it's random enough™
@@ -153,60 +158,30 @@ public class ClientService {
             repo.addCommit(new Commit(commitHash, message, lastHash));
         }
 
-        saveRepository(repo);
+        ClientUtils.saveRepository(repo);
     }
 
-    public static Repository readRepository() {
-        // here we should:
-        // read the repository file from .minigit folder
-        // will use this when we need access to the repository object
-        Path pathToRepoFile = Paths.get(".minigit","repository.json").normalize();
-
-        File file = new File(pathToRepoFile.toAbsolutePath().toString());
-
-        Gson gson = new Gson();
-
-        try {
-            Repository repo = gson.fromJson(new FileReader(file, Charset.forName("UTF-8")), Repository.class);
-            return repo;
-        } catch(IOException e) {
-            // TODO: remove this later, add this to a separate init command.
-            return initRepository("Testing");
-        }
-    }
-
-    public static Repository initRepository(String name) {
+    public static Repository initRepository(String name) throws IOException {
         Repository repo = new Repository(name);
+        ClientUtils.saveRepository(repo);
+        System.out.println("Repository \"" + name + "\" initialized." );
         return repo;
     }
 
-    public static void createFolder() throws IOException {
-        Path pathToRepoFolder = Paths.get( Constants.MINIGIT_DIRECTORY_NAME);
-        Files.createDirectories(pathToRepoFolder);
-    }
+    public static void log() {
+        Repository repo = ClientUtils.readRepository();
+        List<Commit> commits = repo.getCommits();
 
-    public static String repositoryFileSha1(String uuid) throws IOException {
-        try (InputStream is = Files.newInputStream(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, uuid + ".zip"))) {
-            return org.apache.commons.codec.digest.DigestUtils.sha1Hex(is);
+        for (int i = commits.size() - 1; i >= 0; i--) {
+            System.out.println(i);
+            System.out.println("Hash: " + commits.get(i).getHash());
+            System.out.println("CommitMessage: " + commits.get(i).getMessage() + "\n");
         }
     }
 
-    public static void saveRepository(Repository repository) throws IOException {
-        // here we should:
-        // serialize the repository
-        // save the repository file to .minigit folder
+    public static void checkout(String commitHash) throws ZipException {
+        ClientUtils.cleanWorkingDirectory();
 
-        Path pathToRepoFile = Paths.get(".minigit","repository.json").normalize();
-
-        if(!Files.exists(pathToRepoFile)) {
-            createFolder();
-        }
-
-        File file = new File(pathToRepoFile.toAbsolutePath().toString());
-        Gson gson = new Gson();
-
-        try (FileWriter writer = new FileWriter(file)) {
-            gson.toJson(repository, writer);
-        }
+        ZipUtils.extractZipFile(Paths.get(".minigit", commitHash + ".zip").toString(), ".");
     }
 }
