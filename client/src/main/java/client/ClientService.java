@@ -118,9 +118,12 @@ public class ClientService {
          In the future also ignores all files that are in .miniGitIgnore. */
         File dir = new File(workingDir);
         File[] files = dir.listFiles();
+
+        List<String> ignoreFiles = Files.readAllLines(Path.of(".minigitignore"));
+
         if(files != null) {
             for (File file : files) {
-                if (file.getName().endsWith(".minigit")) {
+                if (file.getName().endsWith(".minigit") || ignoreFiles.contains(file.getName())) {
                     continue;
                 } else if(file.isDirectory()) {
                     System.out.println("Added folder" + file);
