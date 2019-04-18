@@ -10,10 +10,9 @@ public class IgnoreCommand extends Command {
     public IgnoreCommand() {}
 
     public void process(String[] input) throws Exception {
-        setInput(input);
-        if (getInput().length == 2) {
+        if (input.length == 2) {
             try {
-                byte[] bytes = getInput()[1].getBytes(StandardCharsets.UTF_8);
+                byte[] bytes = input[1].getBytes(StandardCharsets.UTF_8);
                 Files.write(Path.of(".minigitignore"), bytes);
             } catch (Exception e) {
                 throw new RuntimeException(e);
