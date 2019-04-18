@@ -20,6 +20,7 @@ public class CommandBuilder {
         availableCommands.put("init", new InitCommand());
         availableCommands.put("log", new LogCommand());
         availableCommands.put("checkout", new CheckoutCommand());
+        availableCommands.put("diff", new CommitDiffs());
     }
 
     public Command findCommandByName() throws IOException {

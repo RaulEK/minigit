@@ -1,6 +1,7 @@
 package client;
 
 import com.google.gson.Gson;
+import models.Commit;
 import models.Constants;
 import models.Repository;
 
@@ -9,6 +10,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public final class ClientUtils {
 
@@ -54,7 +58,7 @@ public final class ClientUtils {
         File file = new File(pathToRepoFile.toAbsolutePath().toString());
         Gson gson = new Gson();
 
-        try (FileWriter writer = new FileWriter(file)) {
+        try (FileWriter writer = new FileWriter(file, Charset.forName("UTF-8"))) {
             gson.toJson(repository, writer);
         }
     }
@@ -68,5 +72,47 @@ public final class ClientUtils {
         try (InputStream is = Files.newInputStream(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, uuid + ".zip"))) {
             return org.apache.commons.codec.digest.DigestUtils.sha1Hex(is);
         }
+    }
+
+    public static Commit getCommit(String commitHash, Repository repo) {
+        for (Commit commit : repo.getCommits()) {
+            if (commit.getHash().equals(commitHash)) {
+                return commit;
+            }
+        }
+        return null;
+    }
+
+    public static String getAncestorOfHash(String commitHash) {
+        Repository repo = readRepository();
+        for (Commit commit : repo.getCommits()) {
+            if (commit.getHash().equals(commitHash)) {
+                return commit.getAncestorHash();
+            }
+        }
+        return null;
+    }
+
+    public static void getAllFilePathsInDir(File dir, List<String> filePaths) {
+        for (File file: dir.listFiles()) {
+            if (!file.isDirectory())  {
+                String[] dirs = Paths.get(file.getPath()).toString().split(File.separator);
+                String path = String.join(File.separator, Arrays.copyOfRange(dirs, 3, dirs.length));
+                filePaths.add(path);
+            } else {
+                getAllFilePathsInDir(file, filePaths);
+            }
+        }
+    }
+
+    public static void deleteDirectory(File dir) throws IOException {
+        for (File file: dir.listFiles()) {
+            if (!file.isDirectory())  {
+                Files.delete(file.toPath());
+            } else {
+                deleteDirectory(file);
+            }
+        }
+        Files.delete(dir.toPath());
     }
 }

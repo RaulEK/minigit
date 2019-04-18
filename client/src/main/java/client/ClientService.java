@@ -1,6 +1,9 @@
 package client;
 
-import com.google.gson.Gson;
+import com.github.difflib.DiffUtils;
+import com.github.difflib.algorithm.DiffException;
+import com.github.difflib.text.DiffRow;
+import com.github.difflib.text.DiffRowGenerator;
 import models.*;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -10,12 +13,11 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.net.Socket;
-import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 
 public class ClientService {
@@ -41,7 +43,7 @@ public class ClientService {
             byte[] bytes = Files.readAllBytes(Paths.get(temporaryArchiveName + ".zip"));
 
             /* Deletes temporary zip file. */
-            new File(temporaryArchiveName + ".zip").delete();
+            Files.delete(Paths.get(temporaryArchiveName + ".zip"));
 
             dos.writeInt(MessageIds.PUSH_RECEIVED);
 
@@ -172,7 +174,8 @@ public class ClientService {
         Repository repo = ClientUtils.readRepository();
         List<Commit> commits = repo.getCommits();
 
-        for (int i = commits.size() - 1; i >= 0; i--) {
+        /* Iterates all commits and prints out commitHash and commitMessage. */
+        for (int i = 0; i < commits.size(); i++) {
             System.out.println(i);
             System.out.println("Hash: " + commits.get(i).getHash());
             System.out.println("CommitMessage: " + commits.get(i).getMessage() + "\n");
@@ -180,8 +183,185 @@ public class ClientService {
     }
 
     public static void checkout(String commitHash) throws ZipException {
+        /* Cleans working directory. */
         ClientUtils.cleanWorkingDirectory();
 
+        /* Extracts the required commit to the working directory. */
         ZipUtils.extractZipFile(Paths.get(".minigit", commitHash + ".zip").toString(), ".");
+    }
+
+    public static void commitDiffs(String commitHash) throws IOException, ZipException, DiffException {
+
+        /* Temporary directory where files are held while compared. */
+        Path tempDir = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, ".tempCommits");
+
+        /* Creates .tempCommits if it does't exist */
+        if(!Files.exists(tempDir)) {
+            Files.createDirectory(tempDir);
+        }
+
+        /* Commits zip path */
+        String commitZipPath = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, commitHash + ".zip").toString();
+        String ancestorHash;
+        String commitAncestorZipPath = null;
+
+        String commitTemp;
+        String ancestorTemp = null;
+        List<String> commitDirPaths;
+        List<String> ancestorDirPaths = new ArrayList<>();
+        List<String> files;
+        List<String> deleted = new ArrayList<>();
+
+        /* Finds commits ancestor hash. */
+        if(!(ancestorHash = ClientUtils.getAncestorOfHash(commitHash)).equals("")) {
+            commitAncestorZipPath = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, ancestorHash + ".zip").toString();
+
+            /* Extract two commits into two different folders for comparing. */
+            if(!Files.exists(Paths.get(tempDir.toString(), commitHash))) {
+                Files.createDirectory(Paths.get(tempDir.toString(), commitHash));
+            }
+            if (!Files.exists(Paths.get(tempDir.toString(), ancestorHash))) {
+                Files.createDirectory(Paths.get(tempDir.toString(), ancestorHash));
+            }
+
+            ancestorTemp = Paths.get(tempDir.toString(), ancestorHash).toString();
+            ZipUtils.extractZipFile(commitAncestorZipPath, ancestorTemp);
+            ancestorDirPaths = new ArrayList<>();
+            ClientUtils.getAllFilePathsInDir(new File(ancestorTemp), ancestorDirPaths);
+
+            /* All files that have been removed in commit. */
+            deleted = new ArrayList<>();
+        }
+
+        commitTemp = Paths.get(tempDir.toString(), commitHash).toString();
+        ZipUtils.extractZipFile(commitZipPath, commitTemp);
+        commitDirPaths = new ArrayList<>();
+        ClientUtils.getAllFilePathsInDir(new File(commitTemp), commitDirPaths);
+
+        /* All files that have been added in commit. */
+        List<String> added = new ArrayList<>();
+
+        /* All files in latest commit */
+        files = new ArrayList<>();
+
+        /* Gets commit comments. */
+        HashMap<String, HashMap<Integer, String>> diffComments = ClientUtils.getCommit(commitHash, ClientUtils.readRepository()).getDiffComments();
+
+        /* Finds all files that have been deleted. */
+        for (String ancestorDirPath : ancestorDirPaths) {
+            if (!commitDirPaths.contains(ancestorDirPath)) {
+                deleted.add(ancestorDirPath);
+            }
+        }
+
+        /* Finds all files that have been added. */
+        for (String commitDirPath : commitDirPaths) {
+            if(!ancestorDirPaths.contains(commitDirPath)) {
+                added.add(commitDirPath);
+            } else {
+                files.add(commitDirPath);
+            }
+        }
+
+        /* Displays all deleted files. */
+        for (String path: deleted) {
+            System.out.println("__________________________________________________");
+            System.out.println("File deleted --- " + Constants.ANSI_RED + path + Constants.ANSI_RESET);
+        }
+
+        /* Displays all new files and their content. */
+        for (String path: added) {
+            System.out.println("__________________________________________________");
+            System.out.println("New file --- " + Constants.ANSI_GREEN + path + Constants.ANSI_RESET);
+            try {
+                List<String> lines = Files.readAllLines(Paths.get(path));
+                for (int i = 0; i < lines.size(); i++) {
+                    System.out.println((i + 1) + "| " + Constants.ANSI_GREEN + lines.get(i) + Constants.ANSI_RESET);
+                    if(diffComments.containsKey(path)) {
+                        if(diffComments.get(path).containsKey(i + 1)) {
+                            System.out.println("<<< Comment: " + diffComments.get(path).get(i + 1) + " >>>");
+                        }
+                    }
+                }
+            } catch (MalformedInputException e) {
+                System.out.println(path + " can't read file.");
+            }
+
+            System.out.println("__________________________________________________");
+        }
+
+        /* Displays all files with changes and their content. */
+        for (String path : files) {
+            List<String> original;
+            List<String> patched;
+            try {
+                original = Files.readAllLines(new File(ancestorTemp + File.separator + path).toPath());
+                patched = Files.readAllLines(new File(commitTemp + File.separator + path).toPath());
+            } catch (MalformedInputException e) {
+                System.out.println(path + " can't be read.");
+                System.out.println("__________________________________________________");
+                continue;
+            }
+
+            if (DiffUtils.diff(original, patched).getDeltas().isEmpty()) {
+                continue;
+            }
+
+            System.out.println(path + "\n");
+
+            DiffRowGenerator generator = DiffRowGenerator.create()
+                    .showInlineDiffs(true)
+                    .ignoreWhiteSpaces(true)
+                    .oldTag(f -> "")
+                    .newTag(f -> "")
+                    .build();
+            List<DiffRow> rows = generator.generateDiffRows(original, patched);
+
+            for (int i = 0; i < rows.size(); i++) {
+                DiffRow row = rows.get(i);
+                if(!row.getNewLine().equals(row.getOldLine())) {
+                    if(row.getOldLine() != "") {
+                        System.out.println((i + 1) + "| " + Constants.ANSI_RED + row.getOldLine() + Constants.ANSI_RESET);
+                    }
+                    System.out.println((i + 1) + "| " + Constants.ANSI_GREEN + row.getNewLine() + Constants.ANSI_RESET);
+                } else {
+                    System.out.println((i + 1) + "| " + row.getNewLine());
+                }
+                if(diffComments.containsKey(path)) {
+                    if(diffComments.get(path).containsKey(i + 1)) {
+                        System.out.println("<<< Comment: " + diffComments.get(path).get(i + 1) + " >>>");
+                    }
+                }
+            }
+            System.out.println("__________________________________________________");
+        }
+
+        /* Commenting on changes. */
+        try (Scanner scanner = new Scanner(System.in)) {
+            System.out.println("\nComment on changes? (y/n): ");
+            String next = scanner.nextLine();
+            if(next.equals("y")) {
+                System.out.println("File: ");
+                String fileName = scanner.nextLine();
+                System.out.println("Line: ");
+                int line = Integer.parseInt(scanner.nextLine());
+                System.out.println("Comment: ");
+                String comment = scanner.nextLine();
+
+                Repository repo = ClientUtils.readRepository();
+
+                Commit changedCommit = ClientUtils.getCommit(commitHash, repo);
+
+                changedCommit.addComment(fileName, line, comment);
+
+                ClientUtils.saveRepository(repo);
+            }
+        }
+
+        /* Deletes temporary directories, where commits were compared. */
+        ClientUtils.deleteDirectory(new File(commitTemp));
+        if (ancestorTemp != null) {
+            ClientUtils.deleteDirectory(new File(ancestorTemp));
+        }
     }
 }
