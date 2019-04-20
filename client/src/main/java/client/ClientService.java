@@ -34,11 +34,10 @@ public class ClientService {
         String temporaryArchiveName = UUID.randomUUID().toString();
 
         /* Sends .minigit folder to the server */
-        System.out.println("Connecting to server.");
         try (Socket socket = new Socket("localhost", 7543);
              DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
 
-            ZipUtils.createZipFileFromFolder(temporaryArchiveName + ".zip", Constants.MINIGIT_DIRECTORY_NAME);
+            ZipUtils.createZipFileFromFolder(temporaryArchiveName + ".zip", ClientUtils.seekMinigitFolder().toString());
 
             byte[] bytes = Files.readAllBytes(Paths.get(temporaryArchiveName + ".zip"));
 
@@ -53,14 +52,12 @@ public class ClientService {
             /* Sends bytes to the client */
             dos.write(bytes, 0, bytes.length);
         }
-        System.out.println("Connection finished.");
     }
 
     public static void pullRepository() throws IOException, ZipException {
 
         String temporaryArchiveName = UUID.randomUUID().toString();
 
-        System.out.println("Connecting to server.");
         try (Socket socket = new Socket("localhost", 7543);
              DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
              DataInputStream dis = new DataInputStream(socket.getInputStream())) {
@@ -73,27 +70,23 @@ public class ClientService {
 
             FileUtils.writeByteArrayToFile(new File(temporaryArchiveName + ".zip"), bytes);
 
-            /* Extracts the zip file to working directory. */
-            ZipUtils.extractZipFile(temporaryArchiveName + ".zip", ".");
+            ZipUtils.extractZipFile(temporaryArchiveName + ".zip", String.valueOf(ClientUtils.seekRepoRootFolder()));
 
-            /* Finds last commit and extracts to current working directory.  */
             Repository repository = ClientUtils.readRepository();
             List<Commit> commits = repository.getCommits();
-            String latestCommitName = commits.get(commits.size() - 1).getHash() + ".zip";
+            String latestCommitZip = commits.get(commits.size() - 1).getHash() + ".zip";
 
-            Path commitPath = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, latestCommitName);
+            Path commitPath = Paths.get(ClientUtils.seekMinigitFolder().toString(), latestCommitZip);
 
-            /* Deletes temporary zip file. */
-            new File(temporaryArchiveName + ".zip").delete();
+            Files.delete(Paths.get(temporaryArchiveName + ".zip"));
 
             ClientUtils.cleanWorkingDirectory();
 
-            ZipUtils.extractZipFile(commitPath.toString(), ".");
+            ZipUtils.extractZipFile(commitPath.toString(), String.valueOf(ClientUtils.seekRepoRootFolder()));
         }
     }
 
-    public static void commitRepository(String message, String workingDir) throws ZipException, IOException {
-
+    public static void commitRepository(String message) throws ZipException, IOException {
         // here we should:
         // add the entire working directory to zip file
         // excluding the .minigit folder
@@ -103,11 +96,10 @@ public class ClientService {
         // save the repository file
 
         System.out.println("Committing repository");
-        ClientUtils.createFolder();
 
         String temporaryArchiveName = UUID.randomUUID().toString();
 
-        Path temporaryArchivePath = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, temporaryArchiveName + ".zip");
+        Path temporaryArchivePath = Paths.get(ClientUtils.seekMinigitFolder().toString(), temporaryArchiveName + ".zip");
 
         /* Object which is used to create a zip file from working directory. */
         ZipFile zip = new ZipFile(temporaryArchivePath.toString());
@@ -116,9 +108,9 @@ public class ClientService {
         zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
         zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
 
-        /* Iterates through all files in the working dir and adds them to the zip, if the file isn't .minigit.
+        /* Iterates through all files in the root repository dir and adds them to the zip, if the file isn't .minigit.
          In the future also ignores all files that are in .miniGitIgnore. */
-        File dir = new File(workingDir);
+        File dir = new File(ClientUtils.seekRepoRootFolder().toString());
         File[] files = dir.listFiles();
         if(files != null) {
             for (File file : files) {
@@ -142,7 +134,7 @@ public class ClientService {
         // Can't just use the hash of zip because then we can't have same contents and the same timestamp in .zip
         String commitHash = hash.substring(0, 15) + UUID.randomUUID().toString().substring(0,5);
 
-        File newArchiveFile = new File(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, commitHash + ".zip").toString());
+        File newArchiveFile = new File(Paths.get(ClientUtils.seekMinigitFolder().toString(), commitHash + ".zip").toString());
         File temporaryArchiveFile = new File(temporaryArchivePath.toString());
         if(!temporaryArchiveFile.renameTo(newArchiveFile)){
             throw new IOException("Can't rename archive file");
@@ -165,12 +157,12 @@ public class ClientService {
 
     public static Repository initRepository(String name) throws IOException {
         Repository repo = new Repository(name);
-        ClientUtils.saveRepository(repo);
+        ClientUtils.initializeRepoInCurrentFolder(repo);
         System.out.println("Repository \"" + name + "\" initialized." );
         return repo;
     }
 
-    public static void log() {
+    public static void log() throws IOException {
         Repository repo = ClientUtils.readRepository();
         List<Commit> commits = repo.getCommits();
 
@@ -193,7 +185,7 @@ public class ClientService {
     public static void commitDiffs(String commitHash) throws IOException, ZipException, DiffException {
 
         /* Temporary directory where files are held while compared. */
-        Path tempDir = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, ".tempCommits");
+        Path tempDir = Paths.get(ClientUtils.seekMinigitFolder().toString(), ".tempCommits");
 
         /* Creates .tempCommits if it does't exist */
         if(!Files.exists(tempDir)) {
@@ -201,7 +193,7 @@ public class ClientService {
         }
 
         /* Commits zip path */
-        String commitZipPath = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, commitHash + ".zip").toString();
+        String commitZipPath = Paths.get(ClientUtils.seekMinigitFolder().toString(), commitHash + ".zip").toString();
         String ancestorHash;
         String commitAncestorZipPath = null;
 
@@ -214,7 +206,7 @@ public class ClientService {
 
         /* Finds commits ancestor hash. */
         if(!(ancestorHash = ClientUtils.getAncestorOfHash(commitHash)).equals("")) {
-            commitAncestorZipPath = Paths.get(Constants.MINIGIT_DIRECTORY_NAME, ancestorHash + ".zip").toString();
+            commitAncestorZipPath = Paths.get(ClientUtils.seekMinigitFolder().toString(), ancestorHash + ".zip").toString();
 
             /* Extract two commits into two different folders for comparing. */
             if(!Files.exists(Paths.get(tempDir.toString(), commitHash))) {

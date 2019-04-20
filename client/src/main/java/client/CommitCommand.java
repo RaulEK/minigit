@@ -10,7 +10,7 @@ public class CommitCommand extends Command {
         setInput(input);
         if (getInput().length == 2) {
             String message = getInput()[1];
-            ClientService.commitRepository(message, System.getProperty("user.dir"));
+            ClientService.commitRepository(message);
         } else {
             System.out.println("Invalid parameters. Try commit commitName");
         }
