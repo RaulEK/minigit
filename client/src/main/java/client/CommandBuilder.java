@@ -7,7 +7,7 @@ import java.util.HashMap;
 public class CommandBuilder {
 
 
-    // static map of currently available commands in our minigit
+    // map of currently available commands in our minigit
     private HashMap<String, Command> availableCommands = new HashMap<>();
     private String command;
 
@@ -20,6 +20,7 @@ public class CommandBuilder {
         availableCommands.put("init", new InitCommand());
         availableCommands.put("log", new LogCommand());
         availableCommands.put("checkout", new CheckoutCommand());
+        availableCommands.put("ignore", new IgnoreCommand());
         availableCommands.put("diff", new CommitDiffs());
     }
 

@@ -7,18 +7,25 @@ import com.github.difflib.text.DiffRowGenerator;
 import models.*;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.FileHeader;
 import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.util.Zip4jConstants;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-
+import java.util.logging.FileHandler;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class ClientService {
 
@@ -112,15 +119,25 @@ public class ClientService {
          In the future also ignores all files that are in .miniGitIgnore. */
         File dir = new File(ClientUtils.seekRepoRootFolder().toString());
         File[] files = dir.listFiles();
-        if(files != null) {
+
+        List<String> ignoreTheseFiles = new ArrayList<>();
+
+        if (Files.exists(Paths.get(".minigitignore"))) {
+            ignoreTheseFiles = Files.readAllLines(Paths.get(".minigitignore"));
+        }
+
+        if (files != null) {
             for (File file : files) {
-                if (file.getName().endsWith(".minigit")) {
+                if (ignoreTheseFiles.contains(file.getAbsolutePath())) {
+                    System.out.println("Ignored file: " + file.getPath());
                     continue;
-                } else if(file.isDirectory()) {
-                    System.out.println("Added folder" + file);
+                } else if (file.getName().endsWith(".minigit")) {
+                    continue;
+                } else if (file.isDirectory()) {
+                    System.out.println("Added folder: " + file);
                     zip.addFolder(file, zipParameters);
-                }  else {
-                    System.out.println("Added file" + file);
+                } else {
+                    System.out.println("Added file: " + file);
                     zip.addFile(file, zipParameters);
                 }
             }
@@ -132,20 +149,21 @@ public class ClientService {
 
         // Hash we are going to use to identify commit
         // Can't just use the hash of zip because then we can't have same contents and the same timestamp in .zip
-        String commitHash = hash.substring(0, 15) + UUID.randomUUID().toString().substring(0,5);
+        String commitHash = hash.substring(0, 15) + UUID.randomUUID().toString().substring(0, 5);
 
         File newArchiveFile = new File(Paths.get(ClientUtils.seekMinigitFolder().toString(), commitHash + ".zip").toString());
         File temporaryArchiveFile = new File(temporaryArchivePath.toString());
-        if(!temporaryArchiveFile.renameTo(newArchiveFile)){
+
+        if (!temporaryArchiveFile.renameTo(newArchiveFile)) {
             throw new IOException("Can't rename archive file");
-        };
+        }
 
         /* Creates a commit, adds it to a repository and saves the repository. */
         Repository repo = ClientUtils.readRepository();
         List<Commit> commits = repo.getCommits();
 
         // probably don't need to check if same name commit exists, it's random enough™
-        if(commits.isEmpty()) {
+        if (commits.isEmpty()) {
             repo.addCommit(new Commit(commitHash, message, ""));
         } else {
             String lastHash = commits.get(commits.size() - 1).getHash();
