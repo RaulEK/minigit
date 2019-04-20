@@ -125,35 +125,25 @@ public class ClientService {
         File dir = new File(workingDir);
         File[] files = dir.listFiles();
 
-        if (files != null) {
-            for (File file : files) {
-                if (file.getName().endsWith(".minigit")) {
-                    continue;
-                } else if (file.isDirectory()) {
-                    System.out.println("Added folder" + file);
-                    zip.addFolder(file, zipParameters);
-                } else {
-                    System.out.println("Added file" + file);
-                    zip.addFile(file, zipParameters);
-                }
-            }
+        List<String> ignoreTheseFiles = new ArrayList<>();
+
+        if (Files.exists(Paths.get(".minigitignore"))) {
+            ignoreTheseFiles = Files.readAllLines(Paths.get(".minigitignore"));
         }
 
-        File gitIgnore = new File(".minigitignore");
-        if (gitIgnore.exists()) {
-
-            List<String> ignoreTheseFiles = Files.readAllLines(Path.of(gitIgnore.getName()));
-
-            // this helped: http://thinktibits.blogspot.com/2013/02/Delete-Files-From-ZIP-Archive-Java-Example.html
-            Map<String, String> env = new HashMap<>();
-            env.put("create", "false");
-
-            URI uri = URI.create("jar:file:" + zip.getFile().getAbsolutePath());
-
-            for (String fileName : ignoreTheseFiles) {
-                try (FileSystem zipfs = FileSystems.newFileSystem(uri, env)) {
-                    Files.delete(zipfs.getPath(fileName));
-                    System.out.println("Removed file: " + fileName);
+        if (files != null) {
+            for (File file : files) {
+                if (ignoreTheseFiles.contains(file.getAbsolutePath())) {
+                    System.out.println("Ignored file: " + file.getPath());
+                    continue;
+                } else if (file.getName().endsWith(".minigit")) {
+                    continue;
+                } else if (file.isDirectory()) {
+                    System.out.println("Added folder: " + file);
+                    zip.addFolder(file, zipParameters);
+                } else {
+                    System.out.println("Added file: " + file);
+                    zip.addFile(file, zipParameters);
                 }
             }
         }
