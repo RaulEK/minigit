@@ -1,14 +1,14 @@
-package client;
+package client.commands;
 
-import java.io.IOException;
+import client.service.Checkout;
 
 public class CheckoutCommand extends Command {
     @Override
     public void process(String[] input) throws Exception {
         if(input.length == 2) {
-            ClientService.checkout(input[1]);
+            Checkout.checkout(input[1]);
         } else {
-            System.out.println("Invalid parameters. Try checkout commitHash.");
+            System.out.println("Invalid parameters. Try: checkout <commitHash>");
         }
 
     }

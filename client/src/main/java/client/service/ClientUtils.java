@@ -1,26 +1,30 @@
-package client;
+package client.service;
 
 import com.google.gson.Gson;
 import models.Commit;
 import models.Constants;
 import models.Repository;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public final class ClientUtils {
 
-    public static void cleanWorkingDirectory() {
-        File dir = new File(".");
+    public static void cleanWorkingDirectory() throws IOException {
+        File dir = new File(String.valueOf(ClientUtils.seekRepoRootFolder()));
         for(File file: dir.listFiles()) {
-            if (!file.getName().equals(".minigit")) {
-                file.delete();
+            System.out.println(file);
+            if (file.isDirectory() && !file.getName().equals(".minigit")) {
+                deleteDirectory(file);
+            } else if (!file.getName().equals(".minigit")) {
+                Files.delete(file.toPath());
             }
         }
     }
@@ -108,16 +112,24 @@ public final class ClientUtils {
         return null;
     }
 
-    public static void getAllFilePathsInDir(File dir, List<String> filePaths) {
+    public static void getAllFilePathsInDir(File dir, List<String> filePaths) throws IOException {
         for (File file: dir.listFiles()) {
             if (!file.isDirectory())  {
-                String[] dirs = Paths.get(file.getPath()).toString().split(File.separator);
+
+                String[] dirs = ClientUtils.getRelativePathOfFile(file).toString().split(File.separator);
+
                 String path = String.join(File.separator, Arrays.copyOfRange(dirs, 3, dirs.length));
                 filePaths.add(path);
             } else {
                 getAllFilePathsInDir(file, filePaths);
             }
         }
+    }
+
+    public static Path getRelativePathOfFile(File file) throws IOException {
+        Path repoRoot = seekRepoRootFolder();
+        Path filePath = Paths.get(file.getPath());
+        return filePath.subpath(repoRoot.getNameCount(), filePath.getNameCount());
     }
 
     public static void deleteDirectory(File dir) throws IOException {
@@ -129,6 +141,29 @@ public final class ClientUtils {
             }
         }
         Files.delete(dir.toPath());
+    }
+
+    public static void addFilesToZip(ZipFile zip, ZipParameters zipParameters, File[] files, List<String> ignoreTheseFiles) throws IOException, ZipException {
+        if (files != null) {
+            for (File file : files) {
+                if (file.getName().endsWith(".minigit")) {
+                    continue;
+                } else if (file.isDirectory()) {
+                    zip.addFolder(file, zipParameters);
+                } else {
+                    System.out.println("Added file: " + file);
+                    zip.addFile(file, zipParameters);
+                }
+            }
+            for (String file : ignoreTheseFiles) {
+                try {
+                    zip.removeFile(file);
+                    System.out.println("Ignored file: " + file);
+                } catch (ZipException e) {
+                    System.out.println("Ignored file: " + file);
+                }
+            }
+        }
     }
 
     public static Path seekRepoRootFolder() throws IOException {
@@ -144,5 +179,31 @@ public final class ClientUtils {
 
     public static Path seekMinigitFolder() throws IOException {
         return seekRepoRootFolder().resolve(Constants.MINIGIT_DIRECTORY_NAME);
+    }
+
+    public static void findAddedFiles(List<String> commitDirPaths, List<String> ancestorDirPaths, Map<String, Integer> files) throws IOException {
+        for (String commitDirPath : commitDirPaths) {
+            if(!ancestorDirPaths.contains(commitDirPath)) {
+                files.put(commitDirPath, Constants.ADDED_FILE);
+            } else {
+                files.put(commitDirPath, Constants.CHANGED_FILE);
+            }
+        }
+    }
+
+    public static void findRemovedFiles(List<String> commitDirPaths, List<String> ancestorDirPaths, Map<String, Integer> files) throws IOException {
+        for (String ancestorDirPath : ancestorDirPaths) {
+            if (!commitDirPaths.contains(ancestorDirPath)) {
+                files.put(ancestorDirPath, Constants.REMOVED_FILE);
+            }
+        }
+    }
+
+    public static void checkForComments(HashMap<String, HashMap<Integer, String>> diffComments, Map.Entry<String, Integer> entry, int i) {
+        if (diffComments.containsKey(entry.getKey())) {
+            if (diffComments.get(entry.getKey()).containsKey(i + 1)) {
+                System.out.println("<<< Comment: " + diffComments.get(entry.getKey()).get(i + 1) + " >>>");
+            }
+        }
     }
 }

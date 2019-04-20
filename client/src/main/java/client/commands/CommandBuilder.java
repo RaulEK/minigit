@@ -1,7 +1,8 @@
-package client;
+package client.commands;
+
+import client.service.CommitDiffs;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class CommandBuilder {
@@ -21,7 +22,8 @@ public class CommandBuilder {
         availableCommands.put("log", new LogCommand());
         availableCommands.put("checkout", new CheckoutCommand());
         availableCommands.put("ignore", new IgnoreCommand());
-        availableCommands.put("diff", new CommitDiffs());
+        availableCommands.put("diff", new CommitDiffsCommand());
+        availableCommands.put("comment", new CommentOnCommitCommand());
     }
 
     public Command findCommandByName() throws IOException {

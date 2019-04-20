@@ -1,6 +1,6 @@
-package client;
+package client.commands;
 
-import java.io.IOException;
+import client.service.CommitRepository;
 
 public class CommitCommand extends Command {
 
@@ -9,9 +9,9 @@ public class CommitCommand extends Command {
     public void process(String[] input) throws Exception {
         if (input.length == 2) {
             String message = input[1];
-            ClientService.commitRepository(message, System.getProperty("user.dir"));
+            CommitRepository.commitRepository(message);
         } else {
-            System.out.println("Invalid parameters. Try commit commitName");
+            System.out.println("Invalid parameters. Try: commit <commitName>");
         }
     }
 }

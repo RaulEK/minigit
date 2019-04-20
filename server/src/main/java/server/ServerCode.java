@@ -39,7 +39,7 @@ public class ServerCode implements Runnable {
 
             String temporaryArchiveName = UUID.randomUUID().toString() + ".zip";
 
-            System.out.println("Wrote file to folder where serer.jar was started.");
+            System.out.println("Wrote file to folder where server.jar was started.");
 
             if (type == MessageIds.PUSH_RECEIVED) {
 
