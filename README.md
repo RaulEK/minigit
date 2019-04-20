@@ -17,7 +17,11 @@ java -jar client.jar [input]
 
 * checkout commitHash - switch to an older version.
 
-* diff commitHash - compares commit and its ancestor commit and diplays changes. Can aslo comment on changes.
+* diff commitHash - compares commit and its ancestor commit and diplays changes.
+
+* ignore fileRelativePath
+
+* comment commitHash
 
 
 
