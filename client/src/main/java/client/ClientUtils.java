@@ -25,11 +25,11 @@ public final class ClientUtils {
         }
     }
 
-    public static Repository readRepository() {
+    public static Repository readRepository() throws IOException {
         // here we should:
         // read the repository file from .minigit folder
         // will use this when we need access to the repository object
-        Path pathToRepoFile = Paths.get(".minigit","repository.json").normalize();
+        Path pathToRepoFile = Paths.get(seekMinigitFolder().toString(),"repository.json").normalize();
 
         File file = new File(pathToRepoFile.toAbsolutePath().toString());
 
@@ -44,15 +44,30 @@ public final class ClientUtils {
         }
     }
 
+    public static void initializeRepoInCurrentFolder(Repository repository) throws IOException {
+        Path pathToRepoFile = Paths.get(".minigit","repository.json").normalize();
+
+        if(!Files.exists(pathToRepoFile)) {
+            createFolder();
+        }
+
+        File file = new File(pathToRepoFile.toAbsolutePath().toString());
+        Gson gson = new Gson();
+
+        try (FileWriter writer = new FileWriter(file, Charset.forName("UTF-8"))) {
+            gson.toJson(repository, writer);
+        }
+    }
+
     public static void saveRepository(Repository repository) throws IOException {
         // here we should:
         // serialize the repository
         // save the repository file to .minigit folder
 
-        Path pathToRepoFile = Paths.get(".minigit","repository.json").normalize();
+        Path pathToRepoFile = Paths.get(seekMinigitFolder().toString(),"repository.json").normalize();
 
         if(!Files.exists(pathToRepoFile)) {
-            createFolder();
+            throw new IOException("Can't save repository: repository doesn't seem initialized");
         }
 
         File file = new File(pathToRepoFile.toAbsolutePath().toString());
@@ -69,7 +84,7 @@ public final class ClientUtils {
     }
 
     public static String repositoryFileSha1(String uuid) throws IOException {
-        try (InputStream is = Files.newInputStream(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, uuid + ".zip"))) {
+        try (InputStream is = Files.newInputStream(Paths.get(seekMinigitFolder().toString(), uuid + ".zip"))) {
             return org.apache.commons.codec.digest.DigestUtils.sha1Hex(is);
         }
     }
@@ -83,7 +98,7 @@ public final class ClientUtils {
         return null;
     }
 
-    public static String getAncestorOfHash(String commitHash) {
+    public static String getAncestorOfHash(String commitHash) throws IOException {
         Repository repo = readRepository();
         for (Commit commit : repo.getCommits()) {
             if (commit.getHash().equals(commitHash)) {
@@ -114,5 +129,20 @@ public final class ClientUtils {
             }
         }
         Files.delete(dir.toPath());
+    }
+
+    public static Path seekRepoRootFolder() throws IOException {
+        Path path = Paths.get(System.getProperty("user.dir"));
+        while(!Files.isDirectory(path.resolve(Constants.MINIGIT_DIRECTORY_NAME))){
+            path = path.getParent();
+            if (path == null) {
+                throw new IOException("Minigit folder not found!");
+            }
+        }
+        return path;
+    }
+
+    public static Path seekMinigitFolder() throws IOException {
+        return seekRepoRootFolder().resolve(Constants.MINIGIT_DIRECTORY_NAME);
     }
 }
