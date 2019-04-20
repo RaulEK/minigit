@@ -34,7 +34,6 @@ public class ClientService {
         String temporaryArchiveName = UUID.randomUUID().toString();
 
         /* Sends .minigit folder to the server */
-        System.out.println("Connecting to server.");
         try (Socket socket = new Socket("localhost", 7543);
              DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
 
@@ -53,14 +52,12 @@ public class ClientService {
             /* Sends bytes to the client */
             dos.write(bytes, 0, bytes.length);
         }
-        System.out.println("Connection finished.");
     }
 
     public static void pullRepository() throws IOException, ZipException {
 
         String temporaryArchiveName = UUID.randomUUID().toString();
 
-        System.out.println("Connecting to server.");
         try (Socket socket = new Socket("localhost", 7543);
              DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
              DataInputStream dis = new DataInputStream(socket.getInputStream())) {
@@ -73,22 +70,19 @@ public class ClientService {
 
             FileUtils.writeByteArrayToFile(new File(temporaryArchiveName + ".zip"), bytes);
 
-            /* Extracts the zip file to working directory. */
-            ZipUtils.extractZipFile(temporaryArchiveName + ".zip", ".");
+            ZipUtils.extractZipFile(temporaryArchiveName + ".zip", String.valueOf(ClientUtils.seekRepoRootFolder()));
 
-            /* Finds last commit and extracts to current working directory.  */
             Repository repository = ClientUtils.readRepository();
             List<Commit> commits = repository.getCommits();
-            String latestCommitName = commits.get(commits.size() - 1).getHash() + ".zip";
+            String latestCommitZip = commits.get(commits.size() - 1).getHash() + ".zip";
 
-            Path commitPath = Paths.get(ClientUtils.seekMinigitFolder().toString(), latestCommitName);
+            Path commitPath = Paths.get(ClientUtils.seekMinigitFolder().toString(), latestCommitZip);
 
-            /* Deletes temporary zip file. */
-            new File(temporaryArchiveName + ".zip").delete();
+            Files.delete(Paths.get(temporaryArchiveName + ".zip"));
 
             ClientUtils.cleanWorkingDirectory();
 
-            ZipUtils.extractZipFile(commitPath.toString(), ".");
+            ZipUtils.extractZipFile(commitPath.toString(), String.valueOf(ClientUtils.seekRepoRootFolder()));
         }
     }
 
