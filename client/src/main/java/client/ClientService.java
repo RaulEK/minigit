@@ -4,18 +4,24 @@ import com.google.gson.Gson;
 import models.*;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.FileHeader;
 import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.util.Zip4jConstants;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 
 public class ClientService {
@@ -119,18 +125,35 @@ public class ClientService {
         File dir = new File(workingDir);
         File[] files = dir.listFiles();
 
-        List<String> ignoreFiles = Files.readAllLines(Path.of(".minigitignore"));
-
-        if(files != null) {
+        if (files != null) {
             for (File file : files) {
-                if (file.getName().endsWith(".minigit") || ignoreFiles.contains(file.getName())) {
+                if (file.getName().endsWith(".minigit")) {
                     continue;
-                } else if(file.isDirectory()) {
+                } else if (file.isDirectory()) {
                     System.out.println("Added folder" + file);
                     zip.addFolder(file, zipParameters);
-                }  else {
+                } else {
                     System.out.println("Added file" + file);
                     zip.addFile(file, zipParameters);
+                }
+            }
+        }
+
+        File gitIgnore = new File(".minigitignore");
+        if (gitIgnore.exists()) {
+
+            List<String> ignoreTheseFiles = Files.readAllLines(Path.of(gitIgnore.getName()));
+
+            // this helped: http://thinktibits.blogspot.com/2013/02/Delete-Files-From-ZIP-Archive-Java-Example.html
+            Map<String, String> env = new HashMap<>();
+            env.put("create", "false");
+
+            URI uri = URI.create("jar:file:" + zip.getFile().getAbsolutePath());
+
+            for (String fileName : ignoreTheseFiles) {
+                try (FileSystem zipfs = FileSystems.newFileSystem(uri, env)) {
+                    Files.delete(zipfs.getPath(fileName));
+                    System.out.println("Removed file: " + fileName);
                 }
             }
         }
@@ -141,20 +164,21 @@ public class ClientService {
 
         // Hash we are going to use to identify commit
         // Can't just use the hash of zip because then we can't have same contents and the same timestamp in .zip
-        String commitHash = hash.substring(0, 15) + UUID.randomUUID().toString().substring(0,5);
+        String commitHash = hash.substring(0, 15) + UUID.randomUUID().toString().substring(0, 5);
 
         File newArchiveFile = new File(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, commitHash + ".zip").toString());
         File temporaryArchiveFile = new File(temporaryArchivePath.toString());
-        if(!temporaryArchiveFile.renameTo(newArchiveFile)){
+
+        if (!temporaryArchiveFile.renameTo(newArchiveFile)) {
             throw new IOException("Can't rename archive file");
-        };
+        }
 
         /* Creates a commit, adds it to a repository and saves the repository. */
         Repository repo = ClientUtils.readRepository();
         List<Commit> commits = repo.getCommits();
 
         // probably don't need to check if same name commit exists, it's random enough™
-        if(commits.isEmpty()) {
+        if (commits.isEmpty()) {
             repo.addCommit(new Commit(commitHash, message, ""));
         } else {
             String lastHash = commits.get(commits.size() - 1).getHash();
@@ -167,7 +191,7 @@ public class ClientService {
     public static Repository initRepository(String name) throws IOException {
         Repository repo = new Repository(name);
         ClientUtils.saveRepository(repo);
-        System.out.println("Repository \"" + name + "\" initialized." );
+        System.out.println("Repository \"" + name + "\" initialized.");
         return repo;
     }
 

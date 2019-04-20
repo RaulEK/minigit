@@ -1,2 +1,0 @@
-// Each line is a full file name that is ignored.
-Main.java
