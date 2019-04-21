@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-public class IgnoreCommand extends Command {
+public class IgnoreCommand implements Command {
 
     public IgnoreCommand() {
     }

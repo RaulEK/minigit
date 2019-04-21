@@ -7,7 +7,6 @@ import java.util.HashMap;
 
 public class CommandBuilder {
 
-
     // map of currently available commands in our minigit
     private HashMap<String, Command> availableCommands = new HashMap<>();
     private String command;

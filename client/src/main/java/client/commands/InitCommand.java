@@ -3,8 +3,8 @@ package client.commands;
 
 import client.service.Init;
 
-public class InitCommand extends Command {
-    @Override
+public class InitCommand implements Command {
+
     public void process(String[] input) throws Exception {
         if (input.length == 2) {
             Init.initRepository(input[1]);
