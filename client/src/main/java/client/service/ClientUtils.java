@@ -143,24 +143,15 @@ public final class ClientUtils {
         Files.delete(dir.toPath());
     }
 
-    public static void addFilesToZip(ZipFile zip, ZipParameters zipParameters, File[] files, List<String> ignoreTheseFiles) throws IOException, ZipException {
+    public static void addFilesToZip(ZipFile zip, ZipParameters zipParameters, File[] files) throws IOException, ZipException {
         if (files != null) {
             for (File file : files) {
-                if (file.getName().endsWith(".minigit")) {
-                    continue;
-                } else if (file.isDirectory()) {
+                if (file.isDirectory()) {
+                    System.out.println("Added folder: " + file.getName());
                     zip.addFolder(file, zipParameters);
                 } else {
-                    System.out.println("Added file: " + file);
+                    System.out.println("Added file: " + file.getName());
                     zip.addFile(file, zipParameters);
-                }
-            }
-            for (String file : ignoreTheseFiles) {
-                try {
-                    zip.removeFile(file);
-                    System.out.println("Ignored file: " + file);
-                } catch (ZipException e) {
-                    System.out.println("Ignored file: " + file);
                 }
             }
         }

@@ -2,8 +2,8 @@ package client.commands;
 
 import client.service.CommitDiffs;
 
-public class CommitDiffsCommand extends Command {
-    @Override
+public class CommitDiffsCommand implements Command {
+
     public void process(String[] input) throws Exception {
         if(input.length == 2) {
             CommitDiffs.commitDiffs(input[1]);

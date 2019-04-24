@@ -2,7 +2,7 @@ package client.commands;
 
 import client.service.CommitRepository;
 
-public class CommitCommand extends Command {
+public class CommitCommand implements Command {
 
     public CommitCommand() {}
 

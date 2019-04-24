@@ -6,13 +6,16 @@ import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.util.Zip4jConstants;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,16 +41,24 @@ public class CommitRepository {
         zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
         zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
 
-        File dir = new File(ClientUtils.seekRepoRootFolder().toString());
-        File[] files = dir.listFiles();
-
+        String source = ClientUtils.seekRepoRootFolder().toString();
         List<String> ignoreTheseFiles = new ArrayList<>();
 
         if (Files.exists(Paths.get(".minigitignore"))) {
             ignoreTheseFiles = Files.readAllLines(Paths.get(".minigitignore"));
         }
 
-        ClientUtils.addFilesToZip(zip, zipParameters, files, ignoreTheseFiles);
+
+        String tempDirPath = source + File.separator + ".commitFiles";
+        File tempDir = new File(tempDirPath);
+
+        excludeIgnoredFiles(source, tempDirPath, ignoreTheseFiles);
+
+        File[] files = tempDir.listFiles();
+
+        ClientUtils.addFilesToZip(zip, zipParameters, files);
+
+        ClientUtils.deleteDirectory(tempDir);
 
         // SHA1 hash of zip file
         System.out.println("Calculating hash and creating commit");
@@ -75,5 +86,25 @@ public class CommitRepository {
         }
 
         ClientUtils.saveRepository(repo);
+    }
+
+    public static void excludeIgnoredFiles(String source, String destination, List<String> ignoreThese) throws IOException {
+        File sourceDir = new File(source);
+        File[] currentDirFiles = sourceDir.listFiles();
+
+        if (currentDirFiles != null) {
+            for (File file : currentDirFiles) {
+                if (file.getName().endsWith(".minigit") || file.getName().endsWith(".commitFiles")) {
+                    continue;
+                } else if (file.isDirectory()) {
+                    new File(destination + File.separator + file.getName()).mkdir();
+                    excludeIgnoredFiles(file.getAbsolutePath(), destination + File.separator + file.getName(), ignoreThese);
+                } else {
+                    if (!ignoreThese.contains(file.getName())) {
+                        FileUtils.copyFileToDirectory(file, new File(destination));
+                    }
+                }
+            }
+        }
     }
 }

@@ -3,8 +3,8 @@ package client.commands;
 import client.service.CommentOnCommit;
 
 
-public class CommentOnCommitCommand extends Command{
-    @Override
+public class CommentOnCommitCommand implements Command{
+
     public void process(String[] input) throws Exception {
         if (input.length == 2) {
             CommentOnCommit.CommentOnCommit(input[1]);
