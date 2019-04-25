@@ -5,6 +5,7 @@ import client.service.CommentOnCommit;
 
 public class CommentOnCommitCommand implements Command{
 
+    @Override
     public void process(String[] input) throws Exception {
         if (input.length == 2) {
             CommentOnCommit.CommentOnCommit(input[1]);

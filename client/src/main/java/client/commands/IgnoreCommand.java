@@ -11,6 +11,7 @@ public class IgnoreCommand implements Command {
     public IgnoreCommand() {
     }
 
+    @Override
     public void process(String[] input) throws Exception {
         if (input.length == 2) {
             try {
