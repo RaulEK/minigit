@@ -4,6 +4,7 @@ import client.service.CommitDiffs;
 
 public class CommitDiffsCommand implements Command {
 
+    @Override
     public void process(String[] input) throws Exception {
         if(input.length == 2) {
             CommitDiffs.commitDiffs(input[1]);

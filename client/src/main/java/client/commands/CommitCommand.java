@@ -6,6 +6,7 @@ public class CommitCommand implements Command {
 
     public CommitCommand() {}
 
+    @Override
     public void process(String[] input) throws Exception {
         if (input.length == 2) {
             String message = input[1];

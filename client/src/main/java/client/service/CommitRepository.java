@@ -48,11 +48,9 @@ public class CommitRepository {
             ignoreTheseFiles = Files.readAllLines(Paths.get(".minigitignore"));
         }
 
+        File tempDir = new File(source, ".commitFiles");
 
-        String tempDirPath = source + File.separator + ".commitFiles";
-        File tempDir = new File(tempDirPath);
-
-        excludeIgnoredFiles(source, tempDirPath, ignoreTheseFiles);
+        excludeIgnoredFiles(source, tempDir.getAbsolutePath(), ignoreTheseFiles);
 
         File[] files = tempDir.listFiles();
 
@@ -100,7 +98,7 @@ public class CommitRepository {
                     new File(destination + File.separator + file.getName()).mkdir();
                     excludeIgnoredFiles(file.getAbsolutePath(), destination + File.separator + file.getName(), ignoreThese);
                 } else {
-                    if (!ignoreThese.contains(file.getName())) {
+                    if (!ignoreThese.contains(file.getAbsolutePath().replace(ClientUtils.seekRepoRootFolder().toString(), ""))) {
                         FileUtils.copyFileToDirectory(file, new File(destination));
                     }
                 }
