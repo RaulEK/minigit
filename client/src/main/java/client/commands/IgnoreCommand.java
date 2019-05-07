@@ -24,7 +24,7 @@ public class IgnoreCommand implements Command {
                 throw new RuntimeException(e);
             }
         } else {
-            System.out.println("Invalid parameters. Try: ignore <file name with relative path>");
+            System.out.println("Invalid parameters. Try: ignore <relativeFilePath>");
         }
     }
 }

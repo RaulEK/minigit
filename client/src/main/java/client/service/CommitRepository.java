@@ -2,6 +2,7 @@ package client.service;
 
 import models.Commit;
 import models.Repository;
+import models.ZipUtils;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
@@ -15,12 +16,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 public class CommitRepository {
-    public static void commitRepository(String message) throws ZipException, IOException {
+    public static void commitRepository(String message, List<String> filesToAdd) throws ZipException, IOException {
         // here we should:
         // add the entire working directory to zip file
         // excluding the .minigit folder
@@ -44,14 +44,30 @@ public class CommitRepository {
         String source = ClientUtils.seekRepoRootFolder().toString();
         List<String> ignoreTheseFiles = new ArrayList<>();
 
+        Repository repo = ClientUtils.readRepository();
+        List<Commit> commits = repo.getCommits();
+
         if (Files.exists(Paths.get(".minigitignore"))) {
             ignoreTheseFiles = Files.readAllLines(Paths.get(".minigitignore"));
         }
 
         File tempDir = new File(source, ".commitFiles");
 
-        excludeIgnoredFiles(source, tempDir.getAbsolutePath(), ignoreTheseFiles);
+        if (filesToAdd.get(0).equals("all")) {
+            addOldFiles(source, tempDir.getAbsolutePath(), ignoreTheseFiles);
+        } else {
+            File previousCommit = new File(source, ".previousFiles");
 
+            if (commits.size() != 0) {
+                ZipUtils.extractZipFile(source + File.separator + ".minigit" + File.separator + commits.get(commits.size() - 1).getHash() + ".zip", previousCommit.getAbsolutePath());
+                addOldFiles(previousCommit.getAbsolutePath(), tempDir.getAbsolutePath(), ignoreTheseFiles);
+            } else {
+                addOldFiles(source, tempDir.getAbsolutePath(), ignoreTheseFiles);
+            }
+
+            addNewFiles(source, tempDir.getAbsolutePath(), filesToAdd);
+            ClientUtils.deleteDirectory(previousCommit);
+        }
         File[] files = tempDir.listFiles();
 
         ClientUtils.addFilesToZip(zip, zipParameters, files);
@@ -73,9 +89,6 @@ public class CommitRepository {
             throw new IOException("Can't rename archive file");
         }
 
-        Repository repo = ClientUtils.readRepository();
-        List<Commit> commits = repo.getCommits();
-
         if (commits.isEmpty()) {
             repo.addCommit(new Commit(commitHash, message, ""));
         } else {
@@ -86,7 +99,7 @@ public class CommitRepository {
         ClientUtils.saveRepository(repo);
     }
 
-    public static void excludeIgnoredFiles(String source, String destination, List<String> ignoreThese) throws IOException {
+    public static void addOldFiles(String source, String destination, List<String> ignoreThese) throws IOException {
         File sourceDir = new File(source);
         File[] currentDirFiles = sourceDir.listFiles();
 
@@ -96,13 +109,20 @@ public class CommitRepository {
                     continue;
                 } else if (file.isDirectory()) {
                     new File(destination + File.separator + file.getName()).mkdir();
-                    excludeIgnoredFiles(file.getAbsolutePath(), destination + File.separator + file.getName(), ignoreThese);
+                    addOldFiles(file.getAbsolutePath(), destination + File.separator + file.getName(), ignoreThese);
                 } else {
                     if (!ignoreThese.contains(file.getAbsolutePath().replace(ClientUtils.seekRepoRootFolder().toString(), ""))) {
-                        FileUtils.copyFileToDirectory(file, new File(destination));
+                        FileUtils.copyFileToDirectory(file, new File(destination), true);
                     }
                 }
             }
+        }
+    }
+
+    public static void addNewFiles(String source, String destination, List<String> addThese) throws IOException {
+        for (String file : addThese) {
+            File addThis = new File(source + File.separator + file);
+            FileUtils.copyFileToDirectory(addThis, new File(destination + file.substring(0, file.lastIndexOf("/"))));
         }
     }
 }

@@ -3,16 +3,15 @@ package client.commands;
 import client.service.CommitDiffs;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class CommandBuilder {
 
     // map of currently available commands in our minigit
     private HashMap<String, Command> availableCommands = new HashMap<>();
-    private String command;
 
-    public CommandBuilder(String[] args) {
-        this.command = args[0];
+    public CommandBuilder() {
 
         availableCommands.put("push", new PushCommand());
         availableCommands.put("commit", new CommitCommand());
@@ -23,10 +22,22 @@ public class CommandBuilder {
         availableCommands.put("ignore", new IgnoreCommand());
         availableCommands.put("diff", new CommitDiffsCommand());
         availableCommands.put("comment", new CommentOnCommitCommand());
+        availableCommands.put("add", new AddCommand());
+        availableCommands.put("remove", new RemoveCommand());
     }
 
-    public Command findCommandByName() throws IOException {
+    public Command findCommandByName(String[] args) throws IOException {
+        String command = args[0];
+
         if (availableCommands.get(command) != null) {
+
+            if (command.equals("commit")) {
+                CommitCommand cc = (CommitCommand) availableCommands.get("commit");
+                AddCommand ac = (AddCommand) availableCommands.get("add");
+                cc.setFilesToAdd(ac.getFilesToAdd());
+                ac.setFilesToAdd(new ArrayList<>());
+            }
+
             return availableCommands.get(command);
         }
         return null;
