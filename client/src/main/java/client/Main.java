@@ -12,8 +12,9 @@ public class Main {
         CommandBuilder commandBuilder = new CommandBuilder();
 
         while (true) {
+            System.out.print("Command: ");
             String request = sc.nextLine();
-            if (request.equals("quit")) {
+            if (request.equals("exit")) {
                 break;
             }
             commandBuilder.findCommandByName(request.split(" ")).process(request.split(" "));

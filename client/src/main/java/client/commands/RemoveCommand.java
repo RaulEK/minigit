@@ -9,7 +9,7 @@ public class RemoveCommand implements Command {
     @Override
     public void process(String[] input) throws Exception {
         if (input.length == 2) {
-            File removeFile = new File(input[1]);
+            File removeFile = new File(ClientUtils.seekRepoRootFolder() + File.separator + input[1]);
             if (removeFile.delete()) {
                 System.out.println("File successfully deleted.");
             } else {

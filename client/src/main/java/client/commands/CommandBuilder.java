@@ -24,6 +24,7 @@ public class CommandBuilder {
         availableCommands.put("comment", new CommentOnCommitCommand());
         availableCommands.put("add", new AddCommand());
         availableCommands.put("remove", new RemoveCommand());
+        availableCommands.put("status", new StatusCommand());
     }
 
     public Command findCommandByName(String[] args) throws IOException {
@@ -36,6 +37,12 @@ public class CommandBuilder {
                 AddCommand ac = (AddCommand) availableCommands.get("add");
                 cc.setFilesToAdd(ac.getFilesToAdd());
                 ac.setFilesToAdd(new ArrayList<>());
+                StatusCommand sc = (StatusCommand) availableCommands.get("status");
+                sc.setFilesToAdd(new ArrayList<>());
+            } else if (command.equals("add")) {
+                StatusCommand sc = (StatusCommand) availableCommands.get("status");
+                AddCommand ac = (AddCommand) availableCommands.get("add");
+                sc.setFilesToAdd(ac.getFilesToAdd());
             }
 
             return availableCommands.get(command);
