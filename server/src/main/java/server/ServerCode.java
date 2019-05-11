@@ -1,12 +1,12 @@
 package server;
 
+import client.service.ClientUtils;
+import client.service.CommitDiffs;
+import com.github.difflib.text.DiffRow;
 import models.Constants;
 import models.MessageIds;
 import models.ZipUtils;
-import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
-import net.lingala.zip4j.model.ZipParameters;
-import net.lingala.zip4j.util.Zip4jConstants;
 import org.apache.commons.io.FileUtils;
 
 import java.io.DataInputStream;
@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.UUID;
 
 public class ServerCode implements Runnable {
@@ -53,9 +54,15 @@ public class ServerCode implements Runnable {
                 FileUtils.writeByteArrayToFile(new File(temporaryArchiveName), bytes);
 
                 /* Extracts the zip file */
-                ZipUtils.extractZipFile(temporaryArchiveName, ".");
+                ZipUtils.extractZipFile(temporaryArchiveName, ".temp");
 
-                new File(temporaryArchiveName).delete();
+
+
+                ClientUtils.deleteDirectory(new File(".temp"));
+
+                String hash = ServerUtils.findLastCommitHash();
+
+                ZipUtils.extractZipFile(String.valueOf(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, hash + ".zip")), ServerUtils.getProjectName());
 
             } else if (type == MessageIds.PULL_REQUEST) {
 

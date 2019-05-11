@@ -27,7 +27,8 @@ public class PushRepository {
 
         /* Sends .minigit folder to the server */
         try (Socket socket = new Socket("localhost", 7543);
-             DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
+             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+             DataInputStream dis = new DataInputStream(socket.getInputStream())) {
 
             ZipUtils.createZipFileFromFolder(temporaryArchiveName + ".zip", ClientUtils.seekMinigitFolder().toString());
 

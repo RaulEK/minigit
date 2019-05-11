@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CommitDiffs {
-    public static void commitDiffs(String commitHash) throws IOException, ZipException, DiffException {
+    public static void commitDiffs(String commitHash, String ancestorHash, Boolean print) throws IOException, ZipException, DiffException {
 
         /* Temporary directory where files are held while compared. */
         Path tempDir = Paths.get(ClientUtils.seekMinigitFolder().toString(), ".tempCommits");
@@ -33,15 +33,13 @@ public class CommitDiffs {
         /* Commits zip path */
         String commitZipPath = Paths.get(ClientUtils.seekMinigitFolder().toString(), commitHash + ".zip").toString();
         String commitAncestorZipPath;
-        String ancestorHash;
         String commitTemp = Paths.get(tempDir.toString(), commitHash).toString();;
         String ancestorTemp = null;
         List<String> commitDirPaths = new ArrayList<>();
         List<String> ancestorDirPaths = new ArrayList<>();
         Map<String, Integer> files = new HashMap<>();
 
-        /* Finds commits ancestor hash. */
-        if(!(ancestorHash = ClientUtils.getAncestorOfHash(commitHash)).equals("")) {
+        if (ancestorHash != null && !ancestorHash.equals("")) {
             commitAncestorZipPath = Paths.get(ClientUtils.seekMinigitFolder().toString(), ancestorHash + ".zip").toString();
 
             Files.createDirectory(Paths.get(tempDir.toString(), commitHash));
@@ -76,10 +74,10 @@ public class CommitDiffs {
                     for (int i = 0; i < lines.size(); i++) {
                         System.out.println((i + 1) + "| " + Constants.ANSI_GREEN + lines.get(i) + Constants.ANSI_RESET);
 
-                        ClientUtils.checkForComments(diffComments, entry, i);
+                        checkForComments(diffComments, entry, i);
                     }
                 } catch (MalformedInputException e) {
-                    System.out.println(entry.getKey() + " can't read file.");
+                    continue;
                 }
 
                 System.out.println("__________________________________________________");
@@ -90,9 +88,6 @@ public class CommitDiffs {
                     original = Files.readAllLines(new File(ancestorTemp + File.separator + entry.getKey()).toPath());
                     patched = Files.readAllLines(new File(commitTemp + File.separator + entry.getKey()).toPath());
                 } catch (MalformedInputException e) {
-                    System.out.println("__________________________________________________");
-                    System.out.println(entry.getKey() + " can't be read.");
-                    System.out.println("__________________________________________________");
                     continue;
                 }
 
@@ -112,25 +107,38 @@ public class CommitDiffs {
                         .build();
                 List<DiffRow> rows = generator.generateDiffRows(original, patched);
 
-                for (int i = 0; i < rows.size(); i++) {
-                    DiffRow row = rows.get(i);
-                    if(!row.getNewLine().equals(row.getOldLine())) {
-                        if(row.getOldLine() != "") {
-                            System.out.println((i + 1) + "| " + Constants.ANSI_RED + row.getOldLine() + Constants.ANSI_RESET);
+                if(print) {
+                    for (int i = 0; i < rows.size(); i++) {
+                        DiffRow row = rows.get(i);
+                        if(!row.getNewLine().equals(row.getOldLine())) {
+                            if(row.getOldLine() != "") {
+                                System.out.println((i + 1) + "| " + Constants.ANSI_RED + row.getOldLine() + Constants.ANSI_RESET);
+                            }
+                            System.out.println((i + 1) + "| " + Constants.ANSI_GREEN + row.getNewLine() + Constants.ANSI_RESET);
+                        } else {
+                            System.out.println((i + 1) + "| " + row.getNewLine());
                         }
-                        System.out.println((i + 1) + "| " + Constants.ANSI_GREEN + row.getNewLine() + Constants.ANSI_RESET);
-                    } else {
-                        System.out.println((i + 1) + "| " + row.getNewLine());
+                        checkForComments(diffComments, entry, i);
                     }
-                    ClientUtils.checkForComments(diffComments, entry, i);
+                    System.out.println("__________________________________________________");
+                } else {
                 }
-                System.out.println("__________________________________________________");
+
+
             }
         }
 
         ClientUtils.deleteDirectory(new File(commitTemp));
         if (ancestorTemp != null) {
             ClientUtils.deleteDirectory(new File(ancestorTemp));
+        }
+    }
+
+    private static void checkForComments(HashMap<String, HashMap<Integer, String>> diffComments, Map.Entry<String, Integer> entry, int i) {
+        if (diffComments.containsKey(entry.getKey())) {
+            if (diffComments.get(entry.getKey()).containsKey(i + 1)) {
+                System.out.println("<<< Comment: " + diffComments.get(entry.getKey()).get(i + 1) + " >>>");
+            }
         }
     }
 }

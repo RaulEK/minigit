@@ -86,7 +86,7 @@ public class CommitRepository {
         ClientUtils.saveRepository(repo);
     }
 
-    public static void excludeIgnoredFiles(String source, String destination, List<String> ignoreThese) throws IOException {
+    private static void excludeIgnoredFiles(String source, String destination, List<String> ignoreThese) throws IOException {
         File sourceDir = new File(source);
         File[] currentDirFiles = sourceDir.listFiles();
 
