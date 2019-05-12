@@ -50,11 +50,9 @@ public class ServerCode implements Runnable {
                 FileUtils.writeByteArrayToFile(new File(temporaryArchiveName), bytes);
 
                 /* Extracts the zip file */
-                ZipUtils.extractZipFile(temporaryArchiveName, "");
+                ZipUtils.extractZipFile(temporaryArchiveName, ".");
 
-                String hash = ServerUtils.findLastCommitHash();
-
-                ZipUtils.extractZipFile(String.valueOf(Paths.get(Constants.MINIGIT_DIRECTORY_NAME, hash + ".zip")), ServerUtils.getProjectName());
+                Files.delete(Paths.get(temporaryArchiveName));
 
             } else if (type == MessageIds.PULL_REQUEST) {
 

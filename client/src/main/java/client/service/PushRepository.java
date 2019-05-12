@@ -30,6 +30,8 @@ public class PushRepository {
              DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
              DataInputStream dis = new DataInputStream(socket.getInputStream())) {
 
+            Branch.switchToBranch("master");
+
             ZipUtils.createZipFileFromFolder(temporaryArchiveName + ".zip", Utils.seekMinigitFolder().toString());
 
             byte[] bytes = Files.readAllBytes(Paths.get(temporaryArchiveName + ".zip"));

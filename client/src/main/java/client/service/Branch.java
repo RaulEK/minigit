@@ -12,7 +12,7 @@ public class Branch {
 
     public static void createBranch(String branchName) throws IOException {
 
-        Repository branch = new Repository(branchName, false, Utils.readRepository().getHost());
+        Repository branch = new Repository(branchName, false, Utils.readRepository().getHost() + ":" + Utils.readRepository().getPort());
 
         branch.setCommits(Utils.readRepository().getCommits());
 

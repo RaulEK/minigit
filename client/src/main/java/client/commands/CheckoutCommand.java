@@ -13,8 +13,7 @@ public class CheckoutCommand implements Command {
     public void process(String[] input) throws Exception {
         if(input.length == 2) {
             Checkout.checkout(input[1]);
-        }
-        if(input.length == 3) {
+        } else if(input.length == 3) {
             if(input[1].equals("-b")) {
                 if (Branch.switchToBranch(input[2])) {
                     ArrayList<Commit> repo = Utils.readRepository().getCommits();
