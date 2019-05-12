@@ -1,8 +1,8 @@
 package client.service;
 
+import models.Utils;
 import models.Repository;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,15 +12,17 @@ public class Branch {
 
     public static void createBranch(String branchName) throws IOException {
 
-        Repository branch = new Repository(branchName, false);
+        Repository branch = new Repository(branchName, false, Utils.readRepository().getHost());
+
+        branch.setCommits(Utils.readRepository().getCommits());
 
         Path pathToBranchFile = Paths.get(".minigit", "branches", branchName + ".json").normalize();
 
         if(!Files.exists(pathToBranchFile)) {
-            ClientUtils.createFolder(String.valueOf(Paths.get(".minigit", "branches")));
+            Utils.createFolder(String.valueOf(Paths.get(".minigit", "branches")));
         }
 
-        ClientUtils.createRepositoryJsonFile(branch, pathToBranchFile);
+        Utils.createRepositoryJsonFile(branch, pathToBranchFile);
     }
 
 
@@ -29,9 +31,9 @@ public class Branch {
         Path pathToCurrentBranch;
         Path pathToBranch;
 
-        if (!ClientUtils.findCurrentBranchJsonFileName().equals(branchName + ".json")) {
-            pathToCurrentBranch = Paths.get(String.valueOf(ClientUtils.seekMinigitFolder()), ClientUtils.findCurrentBranchJsonFileName());
-            pathToBranch =  Paths.get(String.valueOf(ClientUtils.seekMinigitFolder()), "branches", branchName + ".json").normalize();
+        if (!Utils.findCurrentBranchJsonFileName().equals(branchName + ".json")) {
+            pathToCurrentBranch = Paths.get(String.valueOf(Utils.seekMinigitFolder()), Utils.findCurrentBranchJsonFileName());
+            pathToBranch =  Paths.get(String.valueOf(Utils.seekMinigitFolder()), "branches", branchName + ".json").normalize();
         } else {
             System.out.println("Already in " + branchName);
             return false;
@@ -41,12 +43,9 @@ public class Branch {
             System.out.println("Branch does not exist.");
         }
 
-        File current = new File(String.valueOf(pathToCurrentBranch));
-        File branch = new File(String.valueOf(pathToBranch));
+        Files.move(pathToCurrentBranch, pathToCurrentBranch.getParent().resolve("branches").resolve(pathToCurrentBranch.getFileName()));
+        Files.move(pathToBranch, pathToBranch.getParent().getParent().resolve(branchName + ".json"));
 
-        current.renameTo(new File(String.valueOf(pathToCurrentBranch.getParent().resolve("branches").resolve(pathToCurrentBranch.getFileName()))));
-
-        branch.renameTo(new File(String.valueOf(pathToBranch.getParent().getParent().resolve(branchName + ".json"))));
         return true;
     }
 }

@@ -22,6 +22,7 @@ public class CommandBuilder {
         availableCommands.put("diff", new CommitDiffsCommand());
         availableCommands.put("comment", new CommentOnCommitCommand());
         availableCommands.put("branch", new BranchCommand());
+        availableCommands.put("server", new ServerCommand());
     }
 
     public Command findCommandByName() throws IOException {

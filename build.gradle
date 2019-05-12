@@ -26,4 +26,3 @@ allprojects {
         compile group: 'com.github.wumpz', name: 'diffutils', version: '2.2'
     }
 }
-

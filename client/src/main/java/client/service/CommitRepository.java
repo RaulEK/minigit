@@ -1,5 +1,6 @@
 package client.service;
 
+import models.Utils;
 import models.Commit;
 import models.Repository;
 import net.lingala.zip4j.core.ZipFile;
@@ -13,9 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,7 +32,7 @@ public class CommitRepository {
 
         String temporaryArchiveName = UUID.randomUUID().toString();
 
-        Path temporaryArchivePath = Paths.get(ClientUtils.seekMinigitFolder().toString(), temporaryArchiveName + ".zip");
+        Path temporaryArchivePath = Paths.get(Utils.seekMinigitFolder().toString(), temporaryArchiveName + ".zip");
 
         ZipFile zip = new ZipFile(temporaryArchivePath.toString());
 
@@ -41,7 +40,7 @@ public class CommitRepository {
         zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
         zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
 
-        String source = ClientUtils.seekRepoRootFolder().toString();
+        String source = Utils.seekRepoRootFolder().toString();
         List<String> ignoreTheseFiles = new ArrayList<>();
 
         if (Files.exists(Paths.get(".minigitignore"))) {
@@ -54,26 +53,26 @@ public class CommitRepository {
 
         File[] files = tempDir.listFiles();
 
-        ClientUtils.addFilesToZip(zip, zipParameters, files);
+        Utils.addFilesToZip(zip, zipParameters, files);
 
-        ClientUtils.deleteDirectory(tempDir);
+        Utils.deleteDirectory(tempDir);
 
         // SHA1 hash of zip file
         System.out.println("Calculating hash and creating commit");
-        String hash = ClientUtils.repositoryFileSha1(temporaryArchiveName);
+        String hash = Utils.repositoryFileSha1(temporaryArchiveName);
 
         // Hash we are going to use to identify commit
         // Can't just use the hash of zip because then we can't have same contents and the same timestamp in .zip
         String commitHash = hash.substring(0, 15) + UUID.randomUUID().toString().substring(0, 5);
 
-        File newArchiveFile = new File(Paths.get(ClientUtils.seekMinigitFolder().toString(), commitHash + ".zip").toString());
+        File newArchiveFile = new File(Paths.get(Utils.seekMinigitFolder().toString(), commitHash + ".zip").toString());
         File temporaryArchiveFile = new File(temporaryArchivePath.toString());
 
         if (!temporaryArchiveFile.renameTo(newArchiveFile)) {
             throw new IOException("Can't rename archive file");
         }
 
-        Repository repo = ClientUtils.readRepository();
+        Repository repo = Utils.readRepository();
         List<Commit> commits = repo.getCommits();
 
         if (commits.isEmpty()) {
@@ -83,7 +82,7 @@ public class CommitRepository {
             repo.addCommit(new Commit(commitHash, message, lastHash));
         }
 
-        ClientUtils.saveRepository(repo);
+        Utils.saveRepository(repo);
     }
 
     private static void excludeIgnoredFiles(String source, String destination, List<String> ignoreThese) throws IOException {
@@ -98,7 +97,7 @@ public class CommitRepository {
                     new File(destination + File.separator + file.getName()).mkdir();
                     excludeIgnoredFiles(file.getAbsolutePath(), destination + File.separator + file.getName(), ignoreThese);
                 } else {
-                    if (!ignoreThese.contains(file.getAbsolutePath().replace(ClientUtils.seekRepoRootFolder().toString(), ""))) {
+                    if (!ignoreThese.contains(file.getAbsolutePath().replace(Utils.seekRepoRootFolder().toString(), ""))) {
                         FileUtils.copyFileToDirectory(file, new File(destination));
                     }
                 }

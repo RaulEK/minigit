@@ -1,6 +1,7 @@
 
 import client.service.*;
 import com.github.difflib.algorithm.DiffException;
+import models.Utils;
 import models.Commit;
 import models.Repository;
 import net.lingala.zip4j.exception.ZipException;
@@ -19,7 +20,7 @@ public class TestClientService {
 
     @Test
     public void testCommitDiffs() throws IOException, ZipException, DiffException, InterruptedException {
-        Init.initRepository("test");
+        Init.initRepository("test", "0:0");
 
         CommitRepository.commitRepository("first commit");
 
@@ -31,7 +32,7 @@ public class TestClientService {
 
         CommitRepository.commitRepository("new file");
 
-        Repository repo = ClientUtils.readRepository();
+        Repository repo = Utils.readRepository();
         List<Commit> commits = repo.getCommits();
 
         String lastCommitHash = commits.get(commits.size() - 1).getHash();
@@ -40,7 +41,7 @@ public class TestClientService {
 
         System.setOut(new PrintStream(outContent));
 
-        CommitDiffs.commitDiffs(lastCommitHash, ClientUtils.getAncestorOfHash(lastCommitHash), true);
+        CommitDiffs.commitDiffs(lastCommitHash, Utils.getAncestorOfHash(lastCommitHash), true);
 
         try {
             Assert.assertEquals("__________________________________________________\n" +
@@ -51,7 +52,7 @@ public class TestClientService {
                     , outContent.toString());
         } finally {
             System.setOut(originalOut);
-            ClientUtils.deleteDirectory(new File(".minigit"));
+            Utils.deleteDirectory(new File(".minigit"));
             Files.delete(testText);
         }
     }

@@ -1,5 +1,6 @@
 package client.service;
 
+import models.Utils;
 import models.Commit;
 import models.Repository;
 
@@ -8,7 +9,7 @@ import java.util.List;
 
 public class Log {
     public static void log() throws IOException {
-        Repository repo = ClientUtils.readRepository();
+        Repository repo = Utils.readRepository();
         List<Commit> commits = repo.getCommits();
 
         for (int i = 0; i < commits.size(); i++) {

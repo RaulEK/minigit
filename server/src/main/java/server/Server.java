@@ -9,6 +9,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Paths;
@@ -19,7 +20,8 @@ public class Server {
         Socket socket = null;
         try (ServerSocket ss = new ServerSocket(7543)){
 
-            System.out.println("Starting server on port 7543");
+            System.out.println("Server address: " + InetAddress.getLocalHost().getHostAddress() + ":" + ss.getLocalPort());
+
             while (true) {
 
                 socket = ss.accept();

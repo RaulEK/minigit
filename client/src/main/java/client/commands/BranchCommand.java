@@ -1,7 +1,7 @@
 package client.commands;
 
 import client.service.Branch;
-import client.service.ClientUtils;
+import models.Utils;
 
 
 public class BranchCommand implements Command {
@@ -11,11 +11,11 @@ public class BranchCommand implements Command {
     @Override
     public void process(String[] input) throws Exception {
         if (input.length == 1) {
-            System.out.println(ClientUtils.findCurrentBranchJsonFileName().split("\\.")[0]);
+            System.out.println(Utils.findCurrentBranchJsonFileName().split("\\.")[0]);
         } else if (input.length == 2) {
             if (input[1].equals("-a")) {
-                System.out.println(ClientUtils.findCurrentBranchJsonFileName().split("\\.")[0]);
-                for (String branchName : ClientUtils.findAllBranchNames()) {
+                System.out.println(Utils.findCurrentBranchJsonFileName().split("\\.")[0]);
+                for (String branchName : Utils.findAllBranchNames()) {
                     if (branchName.endsWith(".json"))
                         System.out.println(branchName.split("\\.")[0]);
                 }

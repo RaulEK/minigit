@@ -4,6 +4,7 @@ import com.github.difflib.DiffUtils;
 import com.github.difflib.algorithm.DiffException;
 import com.github.difflib.text.DiffRow;
 import com.github.difflib.text.DiffRowGenerator;
+import models.Utils;
 import models.Constants;
 import models.ZipUtils;
 import net.lingala.zip4j.exception.ZipException;
@@ -23,7 +24,7 @@ public class CommitDiffs {
     public static void commitDiffs(String commitHash, String ancestorHash, Boolean print) throws IOException, ZipException, DiffException {
 
         /* Temporary directory where files are held while compared. */
-        Path tempDir = Paths.get(ClientUtils.seekMinigitFolder().toString(), ".tempCommits");
+        Path tempDir = Paths.get(Utils.seekMinigitFolder().toString(), ".tempCommits");
 
         /* Creates .tempCommits if it does't exist */
         if(!Files.exists(tempDir)) {
@@ -31,7 +32,7 @@ public class CommitDiffs {
         }
 
         /* Commits zip path */
-        String commitZipPath = Paths.get(ClientUtils.seekMinigitFolder().toString(), commitHash + ".zip").toString();
+        String commitZipPath = Paths.get(Utils.seekMinigitFolder().toString(), commitHash + ".zip").toString();
         String commitAncestorZipPath;
         String commitTemp = Paths.get(tempDir.toString(), commitHash).toString();;
         String ancestorTemp = null;
@@ -39,8 +40,8 @@ public class CommitDiffs {
         List<String> ancestorDirPaths = new ArrayList<>();
         Map<String, Integer> files = new HashMap<>();
 
-        if (ancestorHash != null && !ancestorHash.equals("")) {
-            commitAncestorZipPath = Paths.get(ClientUtils.seekMinigitFolder().toString(), ancestorHash + ".zip").toString();
+        if (ancestorHash != null && !ancestorHash.isEmpty()) {
+            commitAncestorZipPath = Paths.get(Utils.seekMinigitFolder().toString(), ancestorHash + ".zip").toString();
 
             Files.createDirectory(Paths.get(tempDir.toString(), commitHash));
 
@@ -50,17 +51,17 @@ public class CommitDiffs {
 
             ZipUtils.extractZipFile(commitAncestorZipPath, ancestorTemp);
 
-            ClientUtils.getAllFilePathsInDir(new File(ancestorTemp), ancestorDirPaths);
+            Utils.getAllFilePathsInDir(new File(ancestorTemp), ancestorDirPaths);
         }
 
         ZipUtils.extractZipFile(commitZipPath, commitTemp);
-        ClientUtils.getAllFilePathsInDir(new File(commitTemp), commitDirPaths);
+        Utils.getAllFilePathsInDir(new File(commitTemp), commitDirPaths);
 
-        HashMap<String, HashMap<Integer, String>> diffComments = ClientUtils.getCommit(commitHash, ClientUtils.readRepository()).getDiffComments();
+        HashMap<String, HashMap<Integer, String>> diffComments = Utils.getCommit(commitHash, Utils.readRepository()).getDiffComments();
 
-        ClientUtils.findRemovedFiles(commitDirPaths, ancestorDirPaths, files);
+        Utils.findRemovedFiles(commitDirPaths, ancestorDirPaths, files);
 
-        ClientUtils.findAddedFiles(commitDirPaths, ancestorDirPaths, files);
+        Utils.findAddedFiles(commitDirPaths, ancestorDirPaths, files);
 
         for (Map.Entry<String, Integer> entry : files.entrySet()) {
             if(entry.getValue() == Constants.REMOVED_FILE) {
@@ -128,9 +129,9 @@ public class CommitDiffs {
             }
         }
 
-        ClientUtils.deleteDirectory(new File(commitTemp));
+        Utils.deleteDirectory(new File(commitTemp));
         if (ancestorTemp != null) {
-            ClientUtils.deleteDirectory(new File(ancestorTemp));
+            Utils.deleteDirectory(new File(ancestorTemp));
         }
     }
 

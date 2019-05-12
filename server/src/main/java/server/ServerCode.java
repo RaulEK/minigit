@@ -1,8 +1,6 @@
 package server;
 
-import client.service.ClientUtils;
-import client.service.CommitDiffs;
-import com.github.difflib.text.DiffRow;
+import models.Utils;
 import models.Constants;
 import models.MessageIds;
 import models.ZipUtils;
@@ -16,7 +14,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.UUID;
 
 public class ServerCode implements Runnable {
@@ -40,9 +37,9 @@ public class ServerCode implements Runnable {
 
             String temporaryArchiveName = UUID.randomUUID().toString() + ".zip";
 
-            System.out.println("Wrote file to folder where server.jar was started.");
-
             if (type == MessageIds.PUSH_RECEIVED) {
+
+                System.out.println(System.getProperty("user.dir"));
 
                 /* Read message length */
                 int bytesLen = dis.readInt();
@@ -50,15 +47,10 @@ public class ServerCode implements Runnable {
                 /* Reads all bytes from client */
                 byte[] bytes = dis.readNBytes(bytesLen);
 
-                /* Creates a ZIP file from the bytes the client has sent to the server/main/resources folder. */
                 FileUtils.writeByteArrayToFile(new File(temporaryArchiveName), bytes);
 
                 /* Extracts the zip file */
-                ZipUtils.extractZipFile(temporaryArchiveName, ".temp");
-
-
-
-                ClientUtils.deleteDirectory(new File(".temp"));
+                ZipUtils.extractZipFile(temporaryArchiveName, "");
 
                 String hash = ServerUtils.findLastCommitHash();
 

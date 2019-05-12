@@ -1,10 +1,6 @@
-package client.service;
+package models;
 
 import com.google.gson.Gson;
-import models.Commit;
-import models.Constants;
-import models.Repository;
-import models.ZipUtils;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
@@ -16,10 +12,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public final class ClientUtils {
+public final class Utils {
 
     public static void cleanWorkingDirectory() throws IOException {
-        File dir = new File(String.valueOf(ClientUtils.seekRepoRootFolder()));
+        File dir = new File(String.valueOf(Utils.seekRepoRootFolder()));
         for(File file: dir.listFiles()) {
             System.out.println(file);
             if (file.isDirectory() && !file.getName().equals(".minigit")) {
@@ -116,7 +112,7 @@ public final class ClientUtils {
         for (File file: dir.listFiles()) {
             if (!file.isDirectory())  {
 
-                String[] dirs = ClientUtils.getRelativePathOfFile(file).toString().split(File.separator);
+                String[] dirs = Utils.getRelativePathOfFile(file).toString().split(File.separator);
 
                 String path = String.join(File.separator, Arrays.copyOfRange(dirs, 3, dirs.length));
                 filePaths.add(path);
@@ -143,7 +139,7 @@ public final class ClientUtils {
         Files.delete(dir.toPath());
     }
 
-    public static void addFilesToZip(ZipFile zip, ZipParameters zipParameters, File[] files) throws IOException, ZipException {
+    public static void addFilesToZip(ZipFile zip, ZipParameters zipParameters, File[] files) throws ZipException {
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory()) {

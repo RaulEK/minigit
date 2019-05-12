@@ -2,7 +2,7 @@ package client.commands;
 
 import client.service.Branch;
 import client.service.Checkout;
-import client.service.ClientUtils;
+import models.Utils;
 import models.Commit;
 
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ public class CheckoutCommand implements Command {
         if(input.length == 3) {
             if(input[1].equals("-b")) {
                 if (Branch.switchToBranch(input[2])) {
-                    ArrayList<Commit> repo = ClientUtils.readRepository().getCommits();
+                    ArrayList<Commit> repo = Utils.readRepository().getCommits();
                     Checkout.checkout(repo.get(repo.size() - 1).getHash());
                 }
             } else {
