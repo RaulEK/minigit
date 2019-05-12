@@ -11,7 +11,7 @@ public class CheckoutCommand implements Command {
 
     @Override
     public void process(String[] input) throws Exception {
-        if(input.length == 2) {
+        if (input.length == 2) {
             Checkout.checkout(input[1]);
         } else if(input.length == 3) {
             if(input[1].equals("-b")) {

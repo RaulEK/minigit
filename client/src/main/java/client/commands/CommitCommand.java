@@ -2,6 +2,8 @@ package client.commands;
 
 import client.service.CommitRepository;
 
+import java.util.List;
+
 public class CommitCommand implements Command {
 
     public CommitCommand() {}
