@@ -11,7 +11,11 @@ public class CommandBuilder {
     // map of currently available commands in our minigit
     private HashMap<String, Command> availableCommands = new HashMap<>();
 
-    public CommandBuilder() {
+    private String command;
+
+    public CommandBuilder(String[] input) {
+
+        this.command = input[0];
 
         availableCommands.put("push", new PushCommand());
         availableCommands.put("commit", new CommitCommand());
@@ -27,24 +31,9 @@ public class CommandBuilder {
         availableCommands.put("status", new StatusCommand());
     }
 
-    public Command findCommandByName(String[] args) throws IOException {
-        String command = args[0];
+    public Command findCommandByName() throws IOException {
 
         if (availableCommands.get(command) != null) {
-
-            if (command.equals("commit")) {
-                CommitCommand cc = (CommitCommand) availableCommands.get("commit");
-                AddCommand ac = (AddCommand) availableCommands.get("add");
-                cc.setFilesToAdd(ac.getFilesToAdd());
-                ac.setFilesToAdd(new ArrayList<>());
-                StatusCommand sc = (StatusCommand) availableCommands.get("status");
-                sc.setFilesToAdd(new ArrayList<>());
-            } else if (command.equals("add")) {
-                StatusCommand sc = (StatusCommand) availableCommands.get("status");
-                AddCommand ac = (AddCommand) availableCommands.get("add");
-                sc.setFilesToAdd(ac.getFilesToAdd());
-            }
-
             return availableCommands.get(command);
         }
         return null;

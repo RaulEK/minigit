@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class CommitRepository {
-    public static void commitRepository(String message, List<String> filesToAdd) throws ZipException, IOException {
+    public static void commitRepository(String message) throws ZipException, IOException {
         // here we should:
         // add the entire working directory to zip file
         // excluding the .minigit folder
@@ -27,8 +27,11 @@ public class CommitRepository {
         // create a commit with the given message and zip file name (without extension)
         // add the commit to the repository
         // save the repository file
+        File filesToAdd = new File(ClientUtils.seekRepoRootFolder() + "/.minigit/addedfiles.txt");
+        List<String> addThese = Files.readAllLines(Paths.get(filesToAdd.getAbsolutePath()));
 
-        if (filesToAdd.isEmpty()) {
+
+        if (addThese.isEmpty()) {
             System.out.println("Use add <file> to add files for commit");
         } else {
             System.out.println("Committing repository");
@@ -55,7 +58,7 @@ public class CommitRepository {
 
             File tempDir = new File(source, ".commitFiles");
 
-            if (filesToAdd.get(0).equals("all")) {
+            if (addThese.get(0).equals(".")) {
                 addOldFiles(source, tempDir.getAbsolutePath(), ignoreTheseFiles);
             } else {
                 File previousCommit = new File(source, ".previousFiles");
@@ -67,7 +70,7 @@ public class CommitRepository {
                     addOldFiles(source, tempDir.getAbsolutePath(), ignoreTheseFiles);
                 }
 
-                addNewFiles(source, tempDir.getAbsolutePath(), filesToAdd);
+                addNewFiles(source, tempDir.getAbsolutePath(), addThese);
                 ClientUtils.deleteDirectory(previousCommit);
             }
             File[] files = tempDir.listFiles();
@@ -99,6 +102,11 @@ public class CommitRepository {
             }
 
             ClientUtils.saveRepository(repo);
+
+            if (!filesToAdd.delete()) {
+                System.out.println("Something went wrong.");
+            }
+
         }
     }
 
@@ -114,8 +122,7 @@ public class CommitRepository {
                     new File(destination + File.separator + file.getName()).mkdir();
                     addOldFiles(file.getAbsolutePath(), destination + File.separator + file.getName(), ignoreThese);
                 } else {
-                    System.out.println((file.getAbsolutePath()).replace(ClientUtils.seekRepoRootFolder().toString(), ""));
-                    if (!ignoreThese.contains((file.getAbsolutePath()).replace(ClientUtils.seekRepoRootFolder().toString(), ""))) {
+                    if (!ignoreThese.contains((file.getAbsolutePath()).replace((ClientUtils.seekRepoRootFolder() + File.separator), ""))) {
                         FileUtils.copyFileToDirectory(file, new File(destination), true);
                     }
                 }
@@ -125,7 +132,7 @@ public class CommitRepository {
 
     public static void addNewFiles(String source, String destination, List<String> addThese) throws IOException {
         for (String file : addThese) {
-            File addThis = new File(source + file);
+            File addThis = new File(source + File.separator + file);
             FileUtils.copyFileToDirectory(addThis, new File(destination + File.separator + file.substring(0, file.lastIndexOf("/"))));
         }
     }
