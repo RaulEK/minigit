@@ -1,26 +1,3 @@
-plugins {
-    id 'application'
-}
-
-application {
-    mainClassName = 'server.Server'
-}
-
 dependencies {
     compile project(':models')
-}
-
-jar {
-    manifest {
-        attributes(
-                'Class-Path': configurations.compile.files.collect {"$it.name"}.join(' '),
-                'Main-Class': 'server.Server')
-    }
-    from(configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }) {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-        // remove all signature files
-        exclude "META-INF/*.SF"
-        exclude "META-INF/*.DSA"
-        exclude "META-INF/*.RSA"
-    }
 }

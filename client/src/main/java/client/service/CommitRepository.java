@@ -1,5 +1,6 @@
 package client.service;
 
+import models.Utils;
 import models.Commit;
 import models.Repository;
 import models.ZipUtils;
@@ -35,7 +36,7 @@ public class CommitRepository {
             System.out.println("Use add <file> to add files for commit");
         } else {
             System.out.println("Committing repository");
-
+          
             String temporaryArchiveName = UUID.randomUUID().toString();
 
             Path temporaryArchivePath = Paths.get(ClientUtils.seekMinigitFolder().toString(), temporaryArchiveName + ".zip");
@@ -57,6 +58,7 @@ public class CommitRepository {
             }
 
             File tempDir = new File(source, ".commitFiles");
+
 
             if (addThese.get(0).equals(".")) {
                 addOldFiles(source, tempDir.getAbsolutePath(), ignoreTheseFiles);
@@ -87,6 +89,7 @@ public class CommitRepository {
             // Can't just use the hash of zip because then we can't have same contents and the same timestamp in .zip
             String commitHash = hash.substring(0, 15) + UUID.randomUUID().toString().substring(0, 5);
 
+
             File newArchiveFile = new File(Paths.get(ClientUtils.seekMinigitFolder().toString(), commitHash + ".zip").toString());
             File temporaryArchiveFile = new File(temporaryArchivePath.toString());
 
@@ -106,7 +109,6 @@ public class CommitRepository {
             if (!filesToAdd.delete()) {
                 System.out.println("Something went wrong.");
             }
-
         }
     }
 
@@ -124,6 +126,7 @@ public class CommitRepository {
                 } else {
                     if (!ignoreThese.contains((file.getAbsolutePath()).replace((ClientUtils.seekRepoRootFolder() + File.separator), ""))) {
                         FileUtils.copyFileToDirectory(file, new File(destination), true);
+
                     }
                 }
             }

@@ -1,7 +1,5 @@
 package client.commands;
 
-import client.service.CommitDiffs;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +27,8 @@ public class CommandBuilder {
         availableCommands.put("add", new AddCommand());
         availableCommands.put("remove", new RemoveCommand());
         availableCommands.put("status", new StatusCommand());
+        availableCommands.put("branch", new BranchCommand());
+        availableCommands.put("server", new ServerCommand());
     }
 
     public Command findCommandByName() throws IOException {

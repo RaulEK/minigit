@@ -3,14 +3,16 @@ package client.commands;
 
 import client.service.Init;
 
+import java.net.Proxy;
+
 public class InitCommand implements Command {
 
     @Override
     public void process(String[] input) throws Exception {
-        if (input.length == 2) {
-            Init.initRepository(input[1]);
+        if (input.length == 3) {
+            Init.initRepository(input[1], input[2]);
         } else {
-            System.out.println("Invalid parameters. Try: init <repoName>");
+            System.out.println("Invalid parameters. Try: init <repoName> <host>");
         }
     }
 }

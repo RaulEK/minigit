@@ -1,5 +1,6 @@
 dependencies {
     compile project(':models')
+    compile project(':server')
 }
 
 jar {

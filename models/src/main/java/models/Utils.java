@@ -1,9 +1,6 @@
-package client.service;
+package models;
 
 import com.google.gson.Gson;
-import models.Commit;
-import models.Constants;
-import models.Repository;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
@@ -15,10 +12,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public final class ClientUtils {
+public final class Utils {
 
     public static void cleanWorkingDirectory() throws IOException {
-        File dir = new File(String.valueOf(ClientUtils.seekRepoRootFolder()));
+        File dir = new File(String.valueOf(Utils.seekRepoRootFolder()));
         for(File file: dir.listFiles()) {
             System.out.println(file);
             if (file.isDirectory() && !file.getName().equals(".minigit")) {
@@ -33,7 +30,7 @@ public final class ClientUtils {
         // here we should:
         // read the repository file from .minigit folder
         // will use this when we need access to the repository object
-        Path pathToRepoFile = Paths.get(seekMinigitFolder().toString(),"repository.json").normalize();
+        Path pathToRepoFile = Paths.get(seekMinigitFolder().toString(),findCurrentBranchJsonFileName()).normalize();
 
         File file = new File(pathToRepoFile.toAbsolutePath().toString());
 
@@ -49,12 +46,16 @@ public final class ClientUtils {
     }
 
     public static void initializeRepoInCurrentFolder(Repository repository) throws IOException {
-        Path pathToRepoFile = Paths.get(".minigit","repository.json").normalize();
+        Path pathToRepoFile = Paths.get(".minigit","master.json").normalize();
 
         if(!Files.exists(pathToRepoFile)) {
-            createFolder();
+            createFolder(Constants.MINIGIT_DIRECTORY_NAME);
         }
 
+        createRepositoryJsonFile(repository, pathToRepoFile);
+    }
+
+    public static void createRepositoryJsonFile(Repository repository, Path pathToRepoFile) throws IOException {
         File file = new File(pathToRepoFile.toAbsolutePath().toString());
         Gson gson = new Gson();
 
@@ -68,22 +69,17 @@ public final class ClientUtils {
         // serialize the repository
         // save the repository file to .minigit folder
 
-        Path pathToRepoFile = Paths.get(seekMinigitFolder().toString(),"repository.json").normalize();
+        Path pathToRepoFile = Paths.get(seekMinigitFolder().toString(),findCurrentBranchJsonFileName()).normalize();
 
         if(!Files.exists(pathToRepoFile)) {
             throw new IOException("Can't save repository: repository doesn't seem initialized");
         }
 
-        File file = new File(pathToRepoFile.toAbsolutePath().toString());
-        Gson gson = new Gson();
-
-        try (FileWriter writer = new FileWriter(file, Charset.forName("UTF-8"))) {
-            gson.toJson(repository, writer);
-        }
+        createRepositoryJsonFile(repository, pathToRepoFile);
     }
 
-    public static void createFolder() throws IOException {
-        Path pathToRepoFolder = Paths.get( Constants.MINIGIT_DIRECTORY_NAME);
+    public static void createFolder(String fileName) throws IOException {
+        Path pathToRepoFolder = Paths.get(fileName);
         Files.createDirectories(pathToRepoFolder);
     }
 
@@ -116,7 +112,7 @@ public final class ClientUtils {
         for (File file: dir.listFiles()) {
             if (!file.isDirectory())  {
 
-                String[] dirs = ClientUtils.getRelativePathOfFile(file).toString().split(File.separator);
+                String[] dirs = Utils.getRelativePathOfFile(file).toString().split(File.separator);
 
                 String path = String.join(File.separator, Arrays.copyOfRange(dirs, 3, dirs.length));
                 filePaths.add(path);
@@ -143,7 +139,7 @@ public final class ClientUtils {
         Files.delete(dir.toPath());
     }
 
-    public static void addFilesToZip(ZipFile zip, ZipParameters zipParameters, File[] files) throws IOException, ZipException {
+    public static void addFilesToZip(ZipFile zip, ZipParameters zipParameters, File[] files) throws ZipException {
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory()) {
@@ -190,11 +186,24 @@ public final class ClientUtils {
         }
     }
 
-    public static void checkForComments(HashMap<String, HashMap<Integer, String>> diffComments, Map.Entry<String, Integer> entry, int i) {
-        if (diffComments.containsKey(entry.getKey())) {
-            if (diffComments.get(entry.getKey()).containsKey(i + 1)) {
-                System.out.println("<<< Comment: " + diffComments.get(entry.getKey()).get(i + 1) + " >>>");
-            }
+    public static String findCurrentBranchJsonFileName() throws IOException {
+        File dir = new File(String.valueOf(seekMinigitFolder()));
+
+        for (File file : dir.listFiles()) {
+            if(file.getName().endsWith(".json"))
+                return file.getName();
         }
+        return null;
+    }
+
+    public static List<String> findAllBranchNames() throws IOException {
+        List<String> list = new ArrayList<>();
+        File branches = new File(String.valueOf(Paths.get(seekMinigitFolder().toString(), "branches")));
+
+        for (File file : branches.listFiles()) {
+            list.add(file.getName());
+        }
+
+        return list;
     }
 }

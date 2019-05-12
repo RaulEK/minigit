@@ -1,6 +1,6 @@
 package client.commands;
 
-import client.service.ClientUtils;
+import models.Utils;
 import client.service.PushRepository;
 
 public class PushCommand implements Command {
@@ -9,6 +9,6 @@ public class PushCommand implements Command {
 
     @Override
     public void process(String[] input) throws Exception {
-        PushRepository.pushRepository(ClientUtils.readRepository());
+        PushRepository.pushRepository(Utils.readRepository());
     }
 }

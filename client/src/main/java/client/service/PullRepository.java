@@ -1,9 +1,6 @@
 package client.service;
 
-import models.Commit;
-import models.MessageIds;
-import models.Repository;
-import models.ZipUtils;
+import models.*;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.io.FileUtils;
 
@@ -23,7 +20,7 @@ public class PullRepository {
 
         String temporaryArchiveName = UUID.randomUUID().toString();
 
-        try (Socket socket = new Socket("localhost", 7543);
+        try (Socket socket = new Socket(Utils.readRepository().getHost(), Utils.readRepository().getPort());
              DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
              DataInputStream dis = new DataInputStream(socket.getInputStream())) {
 
@@ -36,17 +33,17 @@ public class PullRepository {
             FileUtils.writeByteArrayToFile(new File(temporaryArchiveName + ".zip"), bytes);
 
             try {
-                ZipUtils.extractZipFile(temporaryArchiveName + ".zip", String.valueOf(ClientUtils.seekRepoRootFolder()));
+                ZipUtils.extractZipFile(temporaryArchiveName + ".zip", String.valueOf(Utils.seekRepoRootFolder()));
 
-                Repository repository = ClientUtils.readRepository();
+                Repository repository = Utils.readRepository();
                 List<Commit> commits = repository.getCommits();
                 String latestCommitZip = commits.get(commits.size() - 1).getHash() + ".zip";
 
-                Path commitPath = Paths.get(ClientUtils.seekMinigitFolder().toString(), latestCommitZip);
+                Path commitPath = Paths.get(Utils.seekMinigitFolder().toString(), latestCommitZip);
 
-                ClientUtils.cleanWorkingDirectory();
+                Utils.cleanWorkingDirectory();
 
-                ZipUtils.extractZipFile(commitPath.toString(), String.valueOf(ClientUtils.seekRepoRootFolder()));
+                ZipUtils.extractZipFile(commitPath.toString(), String.valueOf(Utils.seekRepoRootFolder()));
 
             } catch(IOException e) {
                 Files.delete(Paths.get(temporaryArchiveName + ".zip"));

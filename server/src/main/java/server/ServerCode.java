@@ -1,12 +1,10 @@
 package server;
 
+import models.Utils;
 import models.Constants;
 import models.MessageIds;
 import models.ZipUtils;
-import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
-import net.lingala.zip4j.model.ZipParameters;
-import net.lingala.zip4j.util.Zip4jConstants;
 import org.apache.commons.io.FileUtils;
 
 import java.io.DataInputStream;
@@ -39,9 +37,9 @@ public class ServerCode implements Runnable {
 
             String temporaryArchiveName = UUID.randomUUID().toString() + ".zip";
 
-            System.out.println("Wrote file to folder where server.jar was started.");
-
             if (type == MessageIds.PUSH_RECEIVED) {
+
+                System.out.println(System.getProperty("user.dir"));
 
                 /* Read message length */
                 int bytesLen = dis.readInt();
@@ -49,13 +47,12 @@ public class ServerCode implements Runnable {
                 /* Reads all bytes from client */
                 byte[] bytes = dis.readNBytes(bytesLen);
 
-                /* Creates a ZIP file from the bytes the client has sent to the server/main/resources folder. */
                 FileUtils.writeByteArrayToFile(new File(temporaryArchiveName), bytes);
 
                 /* Extracts the zip file */
                 ZipUtils.extractZipFile(temporaryArchiveName, ".");
 
-                new File(temporaryArchiveName).delete();
+                Files.delete(Paths.get(temporaryArchiveName));
 
             } else if (type == MessageIds.PULL_REQUEST) {
 
