@@ -18,9 +18,10 @@ public class TestClientService {
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final PrintStream originalOut = System.out;
 
-    @Test
     public void testCommitDiffs() throws IOException, ZipException, DiffException, InterruptedException {
         Init.initRepository("test", "0:0");
+
+        AddAndRemove.addFilesToTxt(String.valueOf(Paths.get("src", "test", "resources")));
 
         CommitRepository.commitRepository("first commit");
 
@@ -29,6 +30,8 @@ public class TestClientService {
         try (PrintWriter pw = new PrintWriter(testText.toString())) {
             pw.println("some new line");
         }
+
+        AddAndRemove.addFilesToTxt("test.txt");
 
         CommitRepository.commitRepository("new file");
 

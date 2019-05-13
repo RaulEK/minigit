@@ -17,7 +17,6 @@ public final class Utils {
     public static void cleanWorkingDirectory() throws IOException {
         File dir = new File(String.valueOf(Utils.seekRepoRootFolder()));
         for(File file: dir.listFiles()) {
-            System.out.println(file);
             if (file.isDirectory() && !file.getName().equals(".minigit")) {
                 deleteDirectory(file);
             } else if (!file.getName().equals(".minigit")) {
@@ -27,9 +26,7 @@ public final class Utils {
     }
 
     public static Repository readRepository() throws IOException {
-        // here we should:
-        // read the repository file from .minigit folder
-        // will use this when we need access to the repository object
+
         Path pathToRepoFile = Paths.get(seekMinigitFolder().toString(),findCurrentBranchJsonFileName()).normalize();
 
         File file = new File(pathToRepoFile.toAbsolutePath().toString());
@@ -129,6 +126,8 @@ public final class Utils {
     }
 
     public static void deleteDirectory(File dir) throws IOException {
+        if (!dir.exists())
+            return;
         for (File file: dir.listFiles()) {
             if (!file.isDirectory())  {
                 Files.delete(file.toPath());
@@ -200,8 +199,12 @@ public final class Utils {
         List<String> list = new ArrayList<>();
         File branches = new File(String.valueOf(Paths.get(seekMinigitFolder().toString(), "branches")));
 
-        for (File file : branches.listFiles()) {
-            list.add(file.getName());
+        try {
+            for (File file : branches.listFiles()) {
+                list.add(file.getName());
+            }
+        } catch (NullPointerException e) {
+            return list;
         }
 
         return list;

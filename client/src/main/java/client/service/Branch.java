@@ -12,6 +12,11 @@ public class Branch {
 
     public static void createBranch(String branchName) throws IOException {
 
+        if (Utils.findAllBranchNames().contains(branchName + ".json")) {
+            System.out.println("Branch with given name already exists.");
+            return;
+        }
+
         Repository branch = new Repository(branchName, false, Utils.readRepository().getHost() + ":" + Utils.readRepository().getPort());
 
         branch.setCommits(Utils.readRepository().getCommits());

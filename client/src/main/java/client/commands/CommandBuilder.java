@@ -38,4 +38,8 @@ public class CommandBuilder {
         }
         return null;
     }
+
+    public HashMap<String, Command> getAvailableCommands() {
+        return availableCommands;
+    }
 }

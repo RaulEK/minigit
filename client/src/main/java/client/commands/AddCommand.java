@@ -13,7 +13,7 @@ public class AddCommand implements Command {
                 AddAndRemove.addFilesToTxt(input[1]);
             }
         } else {
-            System.out.println("Invalid parameters, try: add <file1;file2>");
+            System.out.println("Invalid parameters, try: add <file1,file2>");
         }
     }
 }

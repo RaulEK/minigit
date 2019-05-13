@@ -30,6 +30,8 @@ public class PushRepository {
              DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
              DataInputStream dis = new DataInputStream(socket.getInputStream())) {
 
+            String currentBranch = Utils.findCurrentBranchJsonFileName();
+
             Branch.switchToBranch("master");
 
             ZipUtils.createZipFileFromFolder(temporaryArchiveName + ".zip", Utils.seekMinigitFolder().toString());
@@ -43,6 +45,8 @@ public class PushRepository {
             dos.writeInt(bytes.length);
 
             dos.write(bytes, 0, bytes.length);
+
+            Branch.switchToBranch(currentBranch.split("\\.")[0]);
         }
     }
 }

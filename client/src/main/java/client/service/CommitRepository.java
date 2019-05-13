@@ -21,16 +21,9 @@ import java.util.UUID;
 
 public class CommitRepository {
     public static void commitRepository(String message) throws ZipException, IOException {
-        // here we should:
-        // add the entire working directory to zip file
-        // excluding the .minigit folder
-        // name the zip some substring of the file's hash and add some pseudorandom value
-        // create a commit with the given message and zip file name (without extension)
-        // add the commit to the repository
-        // save the repository file
-        File filesToAdd = new File(ClientUtils.seekRepoRootFolder() + "/.minigit/addedfiles.txt");
-        List<String> addThese = Files.readAllLines(Paths.get(filesToAdd.getAbsolutePath()));
 
+        File filesToAdd = new File(Utils.seekRepoRootFolder() + "/.minigit/addedfiles.txt");
+        List<String> addThese = Files.readAllLines(Paths.get(filesToAdd.getAbsolutePath()));
 
         if (addThese.isEmpty()) {
             System.out.println("Use add <file> to add files for commit");
@@ -39,7 +32,7 @@ public class CommitRepository {
           
             String temporaryArchiveName = UUID.randomUUID().toString();
 
-            Path temporaryArchivePath = Paths.get(ClientUtils.seekMinigitFolder().toString(), temporaryArchiveName + ".zip");
+            Path temporaryArchivePath = Paths.get(Utils.seekMinigitFolder().toString(), temporaryArchiveName + ".zip");
 
             ZipFile zip = new ZipFile(temporaryArchivePath.toString());
 
@@ -47,10 +40,10 @@ public class CommitRepository {
             zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
             zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
 
-            String source = ClientUtils.seekRepoRootFolder().toString();
+            String source = Utils.seekRepoRootFolder().toString();
             List<String> ignoreTheseFiles = new ArrayList<>();
 
-            Repository repo = ClientUtils.readRepository();
+            Repository repo = Utils.readRepository();
             List<Commit> commits = repo.getCommits();
 
             if (Files.exists(Paths.get(".minigitignore"))) {
@@ -73,24 +66,24 @@ public class CommitRepository {
                 }
 
                 addNewFiles(source, tempDir.getAbsolutePath(), addThese);
-                ClientUtils.deleteDirectory(previousCommit);
+                Utils.deleteDirectory(previousCommit);
             }
             File[] files = tempDir.listFiles();
 
-            ClientUtils.addFilesToZip(zip, zipParameters, files);
+            Utils.addFilesToZip(zip, zipParameters, files);
 
-            ClientUtils.deleteDirectory(tempDir);
+            Utils.deleteDirectory(tempDir);
 
             // SHA1 hash of zip file
             System.out.println("Calculating hash and creating commit");
-            String hash = ClientUtils.repositoryFileSha1(temporaryArchiveName);
+            String hash = Utils.repositoryFileSha1(temporaryArchiveName);
 
             // Hash we are going to use to identify commit
             // Can't just use the hash of zip because then we can't have same contents and the same timestamp in .zip
             String commitHash = hash.substring(0, 15) + UUID.randomUUID().toString().substring(0, 5);
 
 
-            File newArchiveFile = new File(Paths.get(ClientUtils.seekMinigitFolder().toString(), commitHash + ".zip").toString());
+            File newArchiveFile = new File(Paths.get(Utils.seekMinigitFolder().toString(), commitHash + ".zip").toString());
             File temporaryArchiveFile = new File(temporaryArchivePath.toString());
 
             if (!temporaryArchiveFile.renameTo(newArchiveFile)) {
@@ -104,7 +97,7 @@ public class CommitRepository {
                 repo.addCommit(new Commit(commitHash, message, lastHash));
             }
 
-            ClientUtils.saveRepository(repo);
+            Utils.saveRepository(repo);
 
             if (!filesToAdd.delete()) {
                 System.out.println("Something went wrong.");
@@ -124,7 +117,7 @@ public class CommitRepository {
                     new File(destination + File.separator + file.getName()).mkdir();
                     addOldFiles(file.getAbsolutePath(), destination + File.separator + file.getName(), ignoreThese);
                 } else {
-                    if (!ignoreThese.contains((file.getAbsolutePath()).replace((ClientUtils.seekRepoRootFolder() + File.separator), ""))) {
+                    if (!ignoreThese.contains((file.getAbsolutePath()).replace((Utils.seekRepoRootFolder() + File.separator), ""))) {
                         FileUtils.copyFileToDirectory(file, new File(destination), true);
 
                     }
@@ -136,7 +129,7 @@ public class CommitRepository {
     public static void addNewFiles(String source, String destination, List<String> addThese) throws IOException {
         for (String file : addThese) {
             File addThis = new File(source + File.separator + file);
-            FileUtils.copyFileToDirectory(addThis, new File(destination + File.separator + file.substring(0, file.lastIndexOf("/"))));
+            FileUtils.copyFileToDirectory(addThis, new File(destination + File.separator + file.substring(0, file.contains("/") ? file.lastIndexOf("/") : 0)));
         }
     }
 }

@@ -3,31 +3,30 @@
 ```
 client/build/libs/client.jar
 ```
-java -jar client.jar [input]
  
-* init name
+* minigit init \<name> \<host>
 
-* commit message
+* minigit commit \<message>
 
-* push
+* minigit push
 
-* pull
+* minigit pull
 
-* log - see all commits.
+* minigit log - see all commits.
 
-* checkout commitHash - switch to an older version.
+* minigit checkout -b \<name> - switch to another branch.
 
-* diff commitHash - compares commit and its ancestor commit and diplays changes.
+* minigit checkout \<hash> - switch to another commit.
 
-* ignore fileRelativePath
+* minigit diff \<commitHash> - compares commit and its ancestor commit and diplays changes.
 
-* comment commitHash
+* minigit ignore fileRelativePath
 
+* minigit comment commitHash
 
+* minigit branch -a - see all branches.
 
-```
-server/build/libs/server.jar
-```
+* minigit branch - see current branch.
 
-java -jar server.jar 
+* minigit branch <name> - create new branch.
 

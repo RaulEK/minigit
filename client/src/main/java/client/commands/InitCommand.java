@@ -1,9 +1,6 @@
 package client.commands;
 
-
 import client.service.Init;
-
-import java.net.Proxy;
 
 public class InitCommand implements Command {
 

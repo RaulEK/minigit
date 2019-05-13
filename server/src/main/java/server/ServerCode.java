@@ -66,7 +66,9 @@ public class ServerCode implements Runnable {
                 /* Sends file bytes */
                 dos.write(bytes);
 
-            } else {
+                Files.delete(Paths.get(temporaryArchiveName));
+            }
+            else {
                 throw new IllegalArgumentException("type " + type);
             }
         } catch (ZipException e) {

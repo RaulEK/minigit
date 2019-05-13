@@ -12,6 +12,8 @@ public class Log {
         Repository repo = Utils.readRepository();
         List<Commit> commits = repo.getCommits();
 
+        System.out.println("\n" + "Branch >>> " + Utils.findCurrentBranchJsonFileName().split("\\.")[0]);
+
         for (int i = 0; i < commits.size(); i++) {
             System.out.println(i);
             System.out.println("Hash: " + commits.get(i).getHash());

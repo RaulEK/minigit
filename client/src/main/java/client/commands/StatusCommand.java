@@ -1,7 +1,7 @@
 package client.commands;
 
-import client.service.ClientUtils;
 import models.Constants;
+import models.Utils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -14,9 +14,9 @@ public class StatusCommand implements Command {
     @Override
     public void process(String[] input) throws Exception {
         if (input.length == 1) {
-            if (new File(ClientUtils.seekRepoRootFolder() + "/.minigit/addedfiles.txt").exists()) {
+            if (new File(Utils.seekRepoRootFolder() + "/.minigit/addedfiles.txt").exists()) {
                 System.out.println("Files staged for commit: ");
-                for (String file : Files.readAllLines(Paths.get(ClientUtils.seekRepoRootFolder() + "/.minigit/addedfiles.txt"))) {
+                for (String file : Files.readAllLines(Paths.get(Utils.seekRepoRootFolder() + "/.minigit/addedfiles.txt"))) {
                     System.out.println(Constants.ANSI_GREEN + file + Constants.ANSI_RESET);
                 }
                 System.out.println();
