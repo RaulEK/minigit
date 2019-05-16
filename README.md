@@ -23,7 +23,7 @@ Clone this repository and run ./install.sh
 
 * minigit ignore fileRelativePath
 
-* minigit comment commitHash
+* minigit comment \<commitHash> \<fileName> \<line> \<message>
 
 * minigit branch -a - see all branches.
 
