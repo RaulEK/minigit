@@ -16,19 +16,10 @@ public class PushRepository {
 
     public static void pushRepository(Repository repo) throws IOException, ZipException {
 
-        // here we should:
-        // zip the entire .minigit folder
-        // send it to the server
-        // in the server we should unpack it.
-        // and attempt to store it
-        // if there are any conflicts (commit zips with same name) then reject
-
         String temporaryArchiveName = UUID.randomUUID().toString();
 
-        /* Sends .minigit folder to the server */
         try (Socket socket = new Socket(Utils.readRepository().getHost(), Utils.readRepository().getPort());
-             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-             DataInputStream dis = new DataInputStream(socket.getInputStream())) {
+             DataOutputStream dos = new DataOutputStream(socket.getOutputStream())) {
 
             String currentBranch = Utils.findCurrentBranchJsonFileName();
 

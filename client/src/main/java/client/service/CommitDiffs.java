@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CommitDiffs {
-    public static void commitDiffs(String commitHash, String ancestorHash, Boolean print) throws IOException, ZipException, DiffException {
+    public static void commitDiffs(String commitHash, String ancestorHash) throws IOException, ZipException, DiffException {
 
         /* Temporary directory where files are held while compared. */
         Path tempDir = Paths.get(Utils.seekMinigitFolder().toString(), ".tempCommits");
@@ -108,24 +108,19 @@ public class CommitDiffs {
                         .build();
                 List<DiffRow> rows = generator.generateDiffRows(original, patched);
 
-                if(print) {
-                    for (int i = 0; i < rows.size(); i++) {
-                        DiffRow row = rows.get(i);
-                        if(!row.getNewLine().equals(row.getOldLine())) {
-                            if(row.getOldLine() != "") {
-                                System.out.println((i + 1) + "| " + Constants.ANSI_RED + row.getOldLine() + Constants.ANSI_RESET);
-                            }
-                            System.out.println((i + 1) + "| " + Constants.ANSI_GREEN + row.getNewLine() + Constants.ANSI_RESET);
-                        } else {
-                            System.out.println((i + 1) + "| " + row.getNewLine());
+                for (int i = 0; i < rows.size(); i++) {
+                    DiffRow row = rows.get(i);
+                    if(!row.getNewLine().equals(row.getOldLine())) {
+                        if(row.getOldLine() != "") {
+                            System.out.println((i + 1) + "| " + Constants.ANSI_RED + row.getOldLine() + Constants.ANSI_RESET);
                         }
-                        checkForComments(diffComments, entry, i);
+                        System.out.println((i + 1) + "| " + Constants.ANSI_GREEN + row.getNewLine() + Constants.ANSI_RESET);
+                    } else {
+                        System.out.println((i + 1) + "| " + row.getNewLine());
                     }
-                    System.out.println("__________________________________________________");
-                } else {
+                    checkForComments(diffComments, entry, i);
                 }
-
-
+                System.out.println("__________________________________________________");
             }
         }
 

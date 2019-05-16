@@ -8,9 +8,9 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         CommandBuilder cb = new CommandBuilder(args);
-        try {
+        if (cb.findCommandByName() != null) {
             cb.findCommandByName().process(args);
-        } catch (NullPointerException e) {
+        } else {
             System.out.println("Command not available. Available commands: ");
             for (String s : cb.getAvailableCommands().keySet()) {
                 System.out.println(s);

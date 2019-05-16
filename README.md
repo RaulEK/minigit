@@ -1,8 +1,9 @@
-## Commands
+## Installation
 
-```
-client/build/libs/client.jar
-```
+##### Linux/Mac OS
+Clone this repository and run ./install.sh
+
+## Commands
  
 * minigit init \<name> \<host>
 
@@ -30,3 +31,8 @@ client/build/libs/client.jar
 
 * minigit branch <name> - create new branch.
 
+* minigit add <file names separated by ','>
+
+* minigit add . - add all files.
+
+* minigit status

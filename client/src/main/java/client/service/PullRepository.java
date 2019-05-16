@@ -24,6 +24,10 @@ public class PullRepository {
              DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
              DataInputStream dis = new DataInputStream(socket.getInputStream())) {
 
+            String currentBranch = Utils.findCurrentBranchJsonFileName().split("\\.")[0];
+
+            Branch.switchToBranch("master");
+
             dos.writeInt(MessageIds.PULL_REQUEST);
 
             int bytesLen = dis.readInt();
@@ -48,6 +52,8 @@ public class PullRepository {
             } catch(IOException e) {
                 Files.delete(Paths.get(temporaryArchiveName + ".zip"));
                 throw new RuntimeException(e);
+            } finally {
+                Branch.switchToBranch(currentBranch);
             }
         }
     }

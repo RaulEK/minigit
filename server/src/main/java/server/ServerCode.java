@@ -39,8 +39,6 @@ public class ServerCode implements Runnable {
 
             if (type == MessageIds.PUSH_RECEIVED) {
 
-                System.out.println(System.getProperty("user.dir"));
-
                 /* Read message length */
                 int bytesLen = dis.readInt();
 

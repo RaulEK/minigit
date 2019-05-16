@@ -42,4 +42,7 @@ public class Repository {
         return name;
     }
 
+    public boolean isMaster() {
+        return isMaster;
+    }
 }

@@ -44,7 +44,7 @@ public class TestClientService {
 
         System.setOut(new PrintStream(outContent));
 
-        CommitDiffs.commitDiffs(lastCommitHash, Utils.getAncestorOfHash(lastCommitHash), true);
+        CommitDiffs.commitDiffs(lastCommitHash, Utils.getAncestorOfHash(lastCommitHash));
 
         try {
             Assert.assertEquals("__________________________________________________\n" +

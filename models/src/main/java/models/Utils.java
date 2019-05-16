@@ -26,11 +26,17 @@ public final class Utils {
     }
 
     public static Repository readRepository() throws IOException {
-
         Path pathToRepoFile = Paths.get(seekMinigitFolder().toString(),findCurrentBranchJsonFileName()).normalize();
+        return readGivenBranch(pathToRepoFile);
+    }
 
+    public static Repository readBranch(String branchName) throws IOException {
+        Path pathToRepoFile = Paths.get(seekMinigitFolder().toString(), "branches", branchName + ".json").normalize();
+        return readGivenBranch(pathToRepoFile);
+    }
+
+    private static Repository readGivenBranch(Path pathToRepoFile) throws IOException {
         File file = new File(pathToRepoFile.toAbsolutePath().toString());
-
         Gson gson = new Gson();
 
         try {
@@ -199,11 +205,11 @@ public final class Utils {
         List<String> list = new ArrayList<>();
         File branches = new File(String.valueOf(Paths.get(seekMinigitFolder().toString(), "branches")));
 
-        try {
+        if (branches.listFiles() != null) {
             for (File file : branches.listFiles()) {
                 list.add(file.getName());
             }
-        } catch (NullPointerException e) {
+        } else {
             return list;
         }
 
