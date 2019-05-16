@@ -29,7 +29,7 @@ Clone this repository and run ./install.sh
 
 * minigit branch - see current branch.
 
-* minigit branch <name> - create new branch.
+* minigit branch \<name> - create new branch.
 
 * minigit add <file names separated by ','>
 
